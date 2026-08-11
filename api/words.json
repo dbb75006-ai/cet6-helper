@@ -1,0 +1,12 @@
+[
+  {"en":"sustainable","zh":"可持续的","pos":"adj.","ex":"sustainable development"},
+  {"en":"resilient","zh":"有弹性的；适应力强的","pos":"adj.","ex":"a resilient economy"},
+  {"en":"cognition","zh":"认知","pos":"n.","ex":"cognitive science"},
+  {"en":"empathy","zh":"共情；同理心","pos":"n.","ex":"show empathy for others"},
+  {"en":"compliance","zh":"服从；遵守","pos":"n.","ex":"in compliance with regulations"},
+  {"en":"disruption","zh":"中断；扰乱","pos":"n.","ex":"digital disruption"},
+  {"en":"mitigate","zh":"减轻；缓和","pos":"v.","ex":"mitigate the risks"},
+  {"en":"bias","zh":"偏见；偏差","pos":"n.","ex":"unconscious bias"},
+  {"en":"protocol","zh":"协议；礼仪","pos":"n.","ex":"safety protocol"},
+  {"en":"ecosystem","zh":"生态系统","pos":"n.","ex":"business ecosystem"}
+]

@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<title>CET-6 英语学习助手</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="六级助手">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#475569}
+
+:root{
+  --c-text: #f1f5f9;
+  --c-text2: #cbd5e1;
+  --c-muted: #94a3b8;
+  --c-dim: #64748b;
+  --c-faint: #475569;
+  --c-accent: #38bdf8;
+  --c-green: #5eead4;
+  --c-bg-deep: #0f172a;
+  --c-tag-bg: #1e3a5f;
+}
+[data-theme="light"]{
+  --c-text: #1e293b;
+  --c-text2: #475569;
+  --c-muted: #64748b;
+  --c-dim: #64748b;
+  --c-faint: #94a3b8;
+  --c-accent: #0284c7;
+  --c-green: #0d9488;
+  --c-bg-deep: #f1f5f9;
+  --c-tag-bg: rgba(2,132,199,.1);
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  background:linear-gradient(160deg,#0b1120 0%,#0f172a 30%,#111827 100%);
+  color:#e2e8f0;min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:'';position:fixed;top:-40%;right:-20%;width:800px;height:800px;
+  background:radial-gradient(circle,rgba(56,189,248,.06) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;bottom:-30%;left:-15%;width:600px;height:600px;
+  background:radial-gradient(circle,rgba(94,234,212,.04) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+.container{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:24px 20px}
+
+header{text-align:center;padding:36px 0 24px}
+header h1{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,#38bdf8 0%,#818cf8 50%,#5eead4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:2px}
+header p{color:var(--c-dim);margin-top:8px;font-size:.9rem;letter-spacing:.5px}
+
+/* ── Stats Bar ── */
+.stats-bar{display:flex;gap:10px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
+.stat-card{
+  background:linear-gradient(135deg,rgba(30,41,59,.8),rgba(15,23,42,.6));
+  border:1px solid rgba(51,65,85,.5);border-radius:14px;padding:14px 22px;
+  text-align:center;min-width:95px;backdrop-filter:blur(8px);
+  transition:all .3s;cursor:default;
+}
+.stat-card:hover{transform:translateY(-2px);border-color:rgba(56,189,248,.4);box-shadow:0 4px 20px rgba(56,189,248,.1)}
+.stat-card .num{font-size:1.5rem;font-weight:800;color:var(--c-accent);line-height:1.2}
+.stat-card .label{font-size:.72rem;color:var(--c-muted);margin-top:4px;letter-spacing:.5px}
+
+/* ── Navigation ── */
+nav{display:flex;gap:4px;background:rgba(30,41,59,.6);backdrop-filter:blur(12px);border:1px solid rgba(51,65,85,.4);border-radius:16px;padding:5px;margin-bottom:28px;flex-wrap:wrap}
+nav button{
+  flex:1;min-width:75px;padding:11px 8px;border:none;background:transparent;
+  color:var(--c-muted);border-radius:12px;cursor:pointer;font-size:.82rem;font-weight:500;
+  transition:all .25s;white-space:nowrap;position:relative;
+}
+nav button:hover{color:#e2e8f0;background:rgba(51,65,85,.4)}
+nav button.active{background:rgba(56,189,248,.15);color:var(--c-accent);font-weight:600;box-shadow:0 0 12px rgba(56,189,248,.1)}
+
+.view{display:none;animation:fadeSlide .3s}
+.view.active{display:block}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Flashcard ── */
+.flashcard-wrap{perspective:1200px;width:100%;max-width:500px;margin:30px auto}
+.flashcard{
+  width:100%;height:300px;position:relative;cursor:pointer;
+  transition:transform .6s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d;
+}
+.flashcard:hover .front,.flashcard:hover .back{box-shadow:0 8px 40px rgba(56,189,248,.12)}
+.flashcard.flipped{transform:rotateY(180deg)}
+.flashcard .front,.flashcard .back{
+  position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px;text-align:center;transition:box-shadow .3s;
+}
+.flashcard .front{
+  background:linear-gradient(145deg,#1a2740 0%,#1e3a5f 100%);
+  border:1px solid rgba(56,189,248,.2);
+}
+.flashcard .back{
+  background:linear-gradient(145deg,#142a2a 0%,#1a3d3a 100%);
+  border:1px solid rgba(94,234,212,.2);transform:rotateY(180deg);
+}
+.flashcard .word{font-size:2.4rem;font-weight:800;color:#f1f5f9;letter-spacing:1px}
+.flashcard .pos{color:var(--c-muted);font-size:.82rem;margin-top:6px;padding:3px 12px;background:rgba(56,189,248,.1);border-radius:20px}
+.flashcard .meaning{font-size:1.4rem;color:var(--c-green);font-weight:700}
+.flashcard .example{color:var(--c-muted);margin-top:16px;font-size:.9rem;font-style:italic;line-height:1.5}
+.flashcard .hint{color:var(--c-faint);font-size:.75rem;margin-top:24px}
+
+/* ── Buttons ── */
+.card-controls{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.btn{
+  padding:10px 22px;border:none;border-radius:10px;cursor:pointer;
+  font-size:.85rem;font-weight:600;transition:all .25s;color:#fff;
+  letter-spacing:.3px;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.btn:active{transform:translateY(0)}
+.btn-blue{background:linear-gradient(135deg,#2563eb,#3b82f6)}.btn-blue:hover{background:linear-gradient(135deg,#1d4ed8,#2563eb);box-shadow:0 4px 20px rgba(37,99,235,.35)}
+.btn-green{background:linear-gradient(135deg,#059669,#10b981)}.btn-green:hover{background:linear-gradient(135deg,#047857,#059669);box-shadow:0 4px 20px rgba(5,150,105,.35)}
+.btn-red{background:linear-gradient(135deg,#dc2626,#ef4444)}.btn-red:hover{background:linear-gradient(135deg,#b91c1c,#dc2626);box-shadow:0 4px 20px rgba(220,38,38,.35)}
+.btn-gray{background:rgba(51,65,85,.8);color:#e2e8f0;border:1px solid rgba(71,85,105,.4)}.btn-gray:hover{background:#475569;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+.btn-purple{background:linear-gradient(135deg,#7c3aed,#8b5cf6)}.btn-purple:hover{background:linear-gradient(135deg,#6d28d9,#7c3aed);box-shadow:0 4px 20px rgba(124,58,237,.35)}
+
+/* ── Quiz ── */
+.quiz-wrap{max-width:560px;margin:0 auto}
+.quiz-progress{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;color:var(--c-muted);font-size:.85rem}
+.quiz-progress .bar-wrap{flex:1;height:8px;background:rgba(51,65,85,.5);border-radius:4px;margin:0 16px;overflow:hidden}
+.quiz-progress .bar-fill{height:100%;background:linear-gradient(90deg,#38bdf8,#818cf8);border-radius:4px;transition:width .4s}
+.quiz-question{background:linear-gradient(145deg,rgba(30,41,59,.8),rgba(15,23,42,.6));border:1px solid rgba(56,189,248,.15);border-radius:18px;padding:44px 32px;text-align:center;margin-bottom:24px;backdrop-filter:blur(8px)}
+.quiz-question .q-label{color:var(--c-dim);font-size:.78rem;text-transform:uppercase;letter-spacing:1px}
+.quiz-question .q-word{font-size:1.9rem;color:var(--c-green);font-weight:700;margin-top:12px;line-height:1.4}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.quiz-option{padding:18px;background:rgba(30,41,59,.6);border:2px solid rgba(51,65,85,.5);border-radius:14px;color:#e2e8f0;cursor:pointer;font-size:.95rem;transition:all .2s;text-align:center;backdrop-filter:blur(4px)}
+.quiz-option:hover{border-color:var(--c-accent);background:rgba(30,58,95,.5);transform:translateY(-1px);box-shadow:0 4px 16px rgba(56,189,248,.1)}
+.quiz-option.correct{border-color:#10b981;background:rgba(6,78,59,.6);color:var(--c-green);box-shadow:0 0 20px rgba(5,150,105,.2)}
+.quiz-option.wrong{border-color:#ef4444;background:rgba(69,10,10,.6);color:#fca5a5;box-shadow:0 0 20px rgba(220,38,38,.2)}
+.quiz-result{text-align:center;padding:36px;background:linear-gradient(145deg,rgba(30,41,59,.8),rgba(15,23,42,.6));border:1px solid rgba(51,65,85,.4);border-radius:18px;margin-top:24px;backdrop-filter:blur(8px)}
+.quiz-result .score{font-size:3.2rem;font-weight:800;background:linear-gradient(135deg,#38bdf8,#5eead4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ── Tables ── */
+.list-controls{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:12px 18px;background:rgba(30,41,59,.6);border:1px solid rgba(51,65,85,.5);border-radius:10px;color:#e2e8f0;font-size:.9rem;outline:none;transition:all .25s;backdrop-filter:blur(4px)}
+.search-input:focus{border-color:var(--c-accent);box-shadow:0 0 0 3px rgba(56,189,248,.1)}
+.search-input::placeholder{color:var(--c-dim)}
+.filter-select{padding:10px 16px;background:rgba(30,41,59,.6);border:1px solid rgba(51,65,85,.5);border-radius:10px;color:#e2e8f0;font-size:.9rem;outline:none;cursor:pointer;transition:all .25s}
+.filter-select:focus{border-color:var(--c-accent)}
+.word-table{width:100%;border-collapse:collapse;border-radius:12px;overflow:hidden}
+.word-table th{text-align:left;padding:12px 16px;background:rgba(30,41,59,.8);color:var(--c-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid rgba(51,65,85,.4);position:sticky;top:0;backdrop-filter:blur(8px)}
+.word-table td{padding:13px 16px;border-bottom:1px solid rgba(30,41,59,.5);font-size:.9rem;transition:background .2s}
+.word-table tbody tr{transition:all .2s}
+.word-table tbody tr:hover{background:rgba(56,189,248,.04)}
+.word-table .en{color:#f1f5f9;font-weight:600}
+.word-table .zh{color:var(--c-green)}
+.word-table .ex-td{color:var(--c-muted);font-size:.8rem;font-style:italic}
+.status-btn{padding:5px 14px;border:1px solid rgba(51,65,85,.5);border-radius:20px;background:transparent;color:var(--c-muted);cursor:pointer;font-size:.75rem;font-weight:500;transition:all .25s}
+.status-btn:hover{border-color:var(--c-accent);color:#f1f5f9}
+.status-btn.known{background:rgba(5,150,105,.15);border-color:#10b981;color:var(--c-green)}
+.status-btn.known:hover{background:rgba(5,150,105,.25)}
+
+/* ── News ── */
+.news-source-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.news-source-btn{padding:9px 18px;border:1px solid rgba(51,65,85,.5);border-radius:10px;background:rgba(30,41,59,.4);color:var(--c-muted);cursor:pointer;font-size:.82rem;font-weight:500;transition:all .25s;backdrop-filter:blur(4px)}
+.news-source-btn:hover{color:#e2e8f0;border-color:rgba(56,189,248,.5);background:rgba(30,58,95,.4)}
+.news-source-btn.active{background:rgba(56,189,248,.15);border-color:var(--c-accent);color:var(--c-accent);box-shadow:0 0 12px rgba(56,189,248,.1)}
+.news-card{
+  background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.5));
+  border:1px solid rgba(51,65,85,.4);border-radius:14px;padding:20px 24px;
+  margin-bottom:12px;cursor:pointer;transition:all .3s;backdrop-filter:blur(4px);
+  position:relative;overflow:hidden;
+}
+.news-card::after{
+  content:'';position:absolute;left:0;top:0;width:3px;height:100%;
+  background:linear-gradient(180deg,#38bdf8,#5eead4);
+  opacity:0;transition:opacity .3s;
+}
+.news-card:hover{border-color:rgba(56,189,248,.4);transform:translateX(4px);box-shadow:0 4px 24px rgba(56,189,248,.1)}
+.news-card:hover::after{opacity:1}
+.news-card .news-title{font-size:1.05rem;font-weight:700;color:#f1f5f9;margin-bottom:6px;line-height:1.4}
+.news-card .news-meta{font-size:.74rem;color:var(--c-dim)}
+.news-card .news-desc{font-size:.85rem;color:var(--c-muted);line-height:1.6;margin-top:8px}
+.news-card .news-source{display:inline-block;padding:3px 10px;background:rgba(56,189,248,.1);border-radius:20px;font-size:.7rem;color:var(--c-accent);font-weight:600;margin-right:8px;letter-spacing:.3px}
+.news-loading{text-align:center;padding:40px;color:var(--c-dim)}
+
+/* ── CET6 Practice ── */
+.practice-tabs{display:flex;gap:4px;background:rgba(30,41,59,.6);border:1px solid rgba(51,65,85,.4);border-radius:14px;padding:5px;margin-bottom:24px;backdrop-filter:blur(8px);flex-wrap:wrap}
+.practice-tabs button{flex:1;padding:11px 8px;border:none;background:transparent;color:var(--c-muted);border-radius:10px;cursor:pointer;font-size:.84rem;font-weight:500;transition:all .25s;white-space:nowrap}
+.practice-tabs button:hover{color:#e2e8f0;background:rgba(51,65,85,.3)}
+.practice-tabs button.active{background:rgba(56,189,248,.15);color:var(--c-accent);font-weight:600;box-shadow:0 0 10px rgba(56,189,248,.08)}
+.practice-subview{display:none}
+.practice-subview.active{display:block;animation:fadeSlide .25s}
+
+.passage-card{background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.5));border:1px solid rgba(51,65,85,.4);border-radius:16px;padding:28px;margin-bottom:20px;backdrop-filter:blur(4px)}
+.passage-card .passage-title{color:var(--c-accent);font-weight:700;font-size:1.05rem;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(51,65,85,.4)}
+.passage-card .passage-text{color:var(--c-text2);line-height:2;margin-bottom:24px;font-size:.93rem}
+.passage-card .passage-text .highlight{background:rgba(56,189,248,.12);padding:1px 7px;border-radius:4px;color:var(--c-accent);font-weight:500}
+.passage-q{margin-top:14px;padding:14px 18px;background:rgba(15,23,42,.5);border-radius:10px;border:1px solid rgba(51,65,85,.3)}
+.passage-q .q-text{color:#f1f5f9;font-weight:600;margin-bottom:8px;font-size:.92rem}
+.passage-q .q-opt{display:block;padding:5px 0;color:var(--c-muted);cursor:default;font-size:.88rem}
+.passage-q .show-answer{color:var(--c-green);font-weight:600;margin-top:4px;display:none}
+
+.translate-card{background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.5));border:1px solid rgba(51,65,85,.4);border-radius:14px;padding:22px;margin-bottom:14px;backdrop-filter:blur(4px);transition:all .25s}
+.translate-card:hover{border-color:rgba(56,189,248,.3)}
+.translate-card .zh-source{color:#f1f5f9;font-size:1.05rem;margin-bottom:12px;line-height:1.7}
+.translate-card .en-answer{color:var(--c-green);display:none;margin-top:10px;line-height:1.7;padding:10px 14px;background:rgba(5,150,105,.08);border-radius:8px;border:1px solid rgba(5,150,105,.15)}
+.translate-card .btn-reveal{margin-top:8px}
+
+.topic-card{background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.5));border:1px solid rgba(51,65,85,.4);border-radius:14px;padding:22px;margin-bottom:14px;backdrop-filter:blur(4px);transition:all .25s}
+.topic-card:hover{border-color:rgba(56,189,248,.3)}
+.topic-card .topic-title{color:var(--c-accent);font-weight:700;margin-bottom:8px;font-size:1.02rem}
+.topic-card .topic-outline{color:var(--c-muted);line-height:1.8;font-size:.9rem}
+.topic-card .topic-sample{color:var(--c-text2);line-height:1.8;margin-top:12px;display:none;padding:14px 18px;background:rgba(15,23,42,.5);border-radius:10px;border:1px solid rgba(51,65,85,.3)}
+
+.template-card{background:linear-gradient(145deg,rgba(30,41,59,.7),rgba(15,23,42,.5));border:1px solid rgba(51,65,85,.4);border-radius:14px;padding:20px;margin-bottom:12px;backdrop-filter:blur(4px);transition:all .25s}
+.template-card:hover{border-color:rgba(124,58,237,.3);transform:translateX(3px)}
+.template-card .tpl-title{color:#818cf8;font-weight:700;margin-bottom:8px;font-size:.85rem}
+.template-card .tpl-en{color:#f1f5f9;margin-bottom:4px;line-height:1.5;font-size:.95rem;font-weight:500}
+.template-card .tpl-zh{color:var(--c-muted);font-size:.82rem}
+.template-card .tpl-use{color:var(--c-green);font-size:.78rem;margin-top:6px;padding:3px 10px;background:rgba(94,234,212,.08);border-radius:20px;display:inline-block}
+
+/* ── Cloze ── */
+.cloze-text{color:var(--c-text2);line-height:2.5;margin-bottom:22px;font-size:.93rem}
+.cloze-blank{display:inline-block;width:88px;padding:2px 8px;border-bottom:2px dashed rgba(56,189,248,.5);text-align:center;color:var(--c-accent);font-weight:700;margin:0 3px;font-size:.9rem;cursor:pointer;transition:all .25s;border-radius:2px}
+.cloze-blank:hover{background:rgba(56,189,248,.08);border-color:var(--c-accent)}
+.cloze-blank.revealed{border-color:#10b981;color:var(--c-green);background:rgba(5,150,105,.08)}
+.cloze-options{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.cloze-options .opt-chip{padding:7px 16px;background:rgba(15,23,42,.5);border:1px solid rgba(51,65,85,.4);border-radius:20px;color:var(--c-muted);cursor:default;font-size:.85rem;transition:all .2s;font-weight:500}
+.cloze-options .opt-chip:hover{border-color:var(--c-accent);color:#e2e8f0}
+
+/* ── Dictionary Modal ── */
+.dict-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:999;display:none;justify-content:center;align-items:flex-start;padding-top:5vh}
+.dict-overlay.show{display:flex}
+.dict-modal{background:linear-gradient(160deg,#1a2740,#1e293b);border:1px solid rgba(51,65,85,.6);border-radius:20px;padding:32px;max-width:540px;width:92%;max-height:85vh;overflow-y:auto;position:relative;animation:dictIn .3s cubic-bezier(.4,0,.2,1);box-shadow:0 24px 80px rgba(0,0,0,.5)}
+@keyframes dictIn{from{opacity:0;transform:translateY(-24px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.dict-close{position:absolute;top:14px;right:18px;background:rgba(51,65,85,.4);border:none;color:var(--c-muted);font-size:1.2rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.dict-close:hover{background:rgba(220,38,38,.3);color:#fca5a5}
+.dict-word{font-size:2rem;font-weight:800;color:#f1f5f9;letter-spacing:.5px}
+.dict-phonetic{color:var(--c-accent);font-size:1rem;margin:10px 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.dict-phonetic button{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.2);border-radius:50%;color:var(--c-green);cursor:pointer;font-size:1rem;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.dict-phonetic button:hover{background:rgba(56,189,248,.2)}
+.dict-pos{display:inline-block;padding:4px 12px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.15);border-radius:20px;color:var(--c-accent);font-size:.78rem;font-weight:600;margin-right:6px}
+.dict-def{color:var(--c-text2);line-height:1.8;margin:8px 0;padding-left:10px;border-left:2px solid rgba(56,189,248,.2)}
+.dict-ex{color:var(--c-muted);font-style:italic;margin:4px 0 4px 18px;font-size:.88rem}
+.dict-syn{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.dict-syn span{background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.15);padding:4px 12px;border-radius:20px;color:var(--c-green);font-size:.8rem;cursor:pointer;transition:all .2s;font-weight:500}
+.dict-syn span:hover{background:rgba(94,234,212,.18);transform:translateY(-1px)}
+.dict-loading{text-align:center;padding:40px;color:var(--c-dim)}
+
+@media(max-width:500px){
+  header h1{font-size:1.5rem}
+  .flashcard{height:240px}
+  .flashcard .word{font-size:1.6rem}
+  .quiz-options{grid-template-columns:1fr}
+  nav button{font-size:.7rem;padding:8px 3px}
+  .word-table .ex-td{display:none}
+  .dict-modal{padding:20px;max-width:98%}
+}
+@media(hover:none) and (pointer:coarse){
+  .btn,.quiz-option,.news-card,.news-source-btn,.status-btn,.dict-syn span{padding:12px 20px;min-height:44px}
+  .btn{font-size:.9rem}
+  .search-input,.filter-select{padding:14px 18px;font-size:1rem}
+  .flashcard-wrap{max-width:100%}
+}
+@media(display-mode:standalone){
+  .theme-toggle{top:env(safe-area-inset-top,16px)}
+  header{padding-top:16px}
+}
+
+/* ── Theme Toggle ── */
+.theme-toggle{
+  position:fixed;top:16px;right:20px;z-index:100;
+  width:44px;height:44px;border-radius:50%;border:1px solid rgba(51,65,85,.5);
+  background:rgba(30,41,59,.6);backdrop-filter:blur(8px);cursor:pointer;
+  font-size:1.3rem;display:flex;align-items:center;justify-content:center;
+  transition:all .3s;color:#fbbf24;
+}
+.theme-toggle:hover{transform:scale(1.1);box-shadow:0 0 20px rgba(251,191,36,.3)}
+[data-theme="light"] .theme-toggle{background:rgba(255,255,255,.8);border-color:rgba(203,213,225,.6);color:#6366f1}
+[data-theme="light"] .theme-toggle:hover{box-shadow:0 0 20px rgba(99,102,241,.3)}
+
+/* ── Light Theme ── */
+[data-theme="light"] body{background:linear-gradient(160deg,#f1f5f9 0%,#f8fafc 50%,#e2e8f0 100%);color:#1e293b}
+[data-theme="light"] body::before{background:radial-gradient(circle,rgba(56,189,248,.1) 0%,transparent 70%)}
+[data-theme="light"] body::after{background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 70%)}
+[data-theme="light"] header h1{background:linear-gradient(135deg,#0284c7,#4f46e5,#0d9488);-webkit-background-clip:text;background-clip:text}
+[data-theme="light"] header p{color:var(--c-dim)}
+[data-theme="light"] .stat-card{background:rgba(255,255,255,.8);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .stat-card .num{color:#0284c7}
+[data-theme="light"] .stat-card .label{color:var(--c-dim)}
+[data-theme="light"] nav{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] nav button{color:var(--c-dim)}
+[data-theme="light"] nav button:hover{color:#1e293b;background:rgba(203,213,225,.3)}
+[data-theme="light"] nav button.active{background:rgba(2,132,199,.1);color:#0284c7}
+[data-theme="light"] .flashcard .front{background:linear-gradient(145deg,#eff6ff,#dbeafe);border-color:rgba(2,132,199,.2)}
+[data-theme="light"] .flashcard .back{background:linear-gradient(145deg,#ecfdf5,#d1fae5);border-color:rgba(13,148,136,.2)}
+[data-theme="light"] .flashcard .word{color:#0f172a}
+[data-theme="light"] .flashcard .pos{color:var(--c-dim);background:rgba(2,132,199,.08)}
+[data-theme="light"] .flashcard .meaning{color:#0d9488}
+[data-theme="light"] .flashcard .example{color:var(--c-dim)}
+[data-theme="light"] .flashcard .hint{color:var(--c-muted)}
+[data-theme="light"] .btn-gray{background:rgba(203,213,225,.7);border-color:rgba(148,163,184,.4);color:#334155}
+[data-theme="light"] .btn-gray:hover{background:#cbd5e1}
+[data-theme="light"] .quiz-option{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.5);color:#334155}
+[data-theme="light"] .quiz-option:hover{background:rgba(219,234,254,.7);border-color:#0284c7}
+[data-theme="light"] .quiz-question{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.4)}
+[data-theme="light"] .quiz-question .q-label{color:var(--c-muted)}
+[data-theme="light"] .quiz-result{background:rgba(255,255,255,.8);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .search-input{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.5);color:#1e293b}
+[data-theme="light"] .search-input::placeholder{color:var(--c-muted)}
+[data-theme="light"] .filter-select{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.5);color:#1e293b}
+[data-theme="light"] .word-table th{background:rgba(255,255,255,.8);color:var(--c-dim);border-bottom-color:rgba(203,213,225,.4)}
+[data-theme="light"] .word-table td{border-bottom-color:rgba(203,213,225,.3)}
+[data-theme="light"] .word-table tbody tr:hover{background:rgba(56,189,248,.05)}
+[data-theme="light"] .word-table .en{color:#1e293b}
+[data-theme="light"] .word-table .zh{color:#0d9488}
+[data-theme="light"] .word-table .ex-td{color:var(--c-dim)}
+[data-theme="light"] .status-btn{border-color:rgba(203,213,225,.5);color:var(--c-dim)}
+[data-theme="light"] .status-btn:hover{color:#1e293b}
+[data-theme="light"] .news-source-btn{background:rgba(255,255,255,.5);border-color:rgba(203,213,225,.5);color:var(--c-dim)}
+[data-theme="light"] .news-source-btn:hover{color:#1e293b;background:rgba(219,234,254,.5)}
+[data-theme="light"] .news-source-btn.active{background:rgba(2,132,199,.1);border-color:#0284c7;color:#0284c7}
+[data-theme="light"] .news-card{background:rgba(255,255,255,.75);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .news-card:hover{border-color:rgba(2,132,199,.4);box-shadow:0 4px 24px rgba(2,132,199,.08)}
+[data-theme="light"] .news-card .news-title{color:#1e293b}
+[data-theme="light"] .news-card .news-desc{color:var(--c-dim)}
+[data-theme="light"] .news-card .news-source{background:rgba(2,132,199,.08);color:#0284c7}
+[data-theme="light"] .practice-tabs{background:rgba(255,255,255,.7);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .practice-tabs button{color:var(--c-dim)}
+[data-theme="light"] .practice-tabs button:hover{color:#1e293b;background:rgba(203,213,225,.3)}
+[data-theme="light"] .practice-tabs button.active{background:rgba(2,132,199,.1);color:#0284c7}
+[data-theme="light"] .passage-card{background:rgba(255,255,255,.75);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .passage-card .passage-title{color:#0284c7;border-bottom-color:rgba(203,213,225,.4)}
+[data-theme="light"] .passage-card .passage-text{color:var(--c-faint)}
+[data-theme="light"] .passage-card .passage-text .highlight{background:rgba(2,132,199,.1);color:#0284c7}
+[data-theme="light"] .passage-q{background:rgba(241,245,249,.7);border-color:rgba(203,213,225,.4)}
+[data-theme="light"] .passage-q .q-text{color:#1e293b}
+[data-theme="light"] .passage-q .q-opt{color:var(--c-dim)}
+[data-theme="light"] .translate-card{background:rgba(255,255,255,.75);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .translate-card .zh-source{color:#1e293b}
+[data-theme="light"] .translate-card .en-answer{background:rgba(13,148,136,.06);border-color:rgba(13,148,136,.12)}
+[data-theme="light"] .topic-card{background:rgba(255,255,255,.75);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .topic-card .topic-title{color:#0284c7}
+[data-theme="light"] .topic-card .topic-outline{color:var(--c-dim)}
+[data-theme="light"] .topic-card .topic-sample{background:rgba(241,245,249,.7);border-color:rgba(203,213,225,.4);color:var(--c-faint)}
+[data-theme="light"] .template-card{background:rgba(255,255,255,.75);border-color:rgba(203,213,225,.5)}
+[data-theme="light"] .template-card .tpl-title{color:#4f46e5}
+[data-theme="light"] .template-card .tpl-en{color:#1e293b}
+[data-theme="light"] .template-card .tpl-zh{color:var(--c-dim)}
+[data-theme="light"] .template-card .tpl-use{background:rgba(13,148,136,.06);color:#0d9488}
+[data-theme="light"] .cloze-text{color:var(--c-faint)}
+[data-theme="light"] .cloze-blank{border-bottom-color:rgba(2,132,199,.4)}
+[data-theme="light"] .cloze-blank:hover{background:rgba(2,132,199,.06)}
+[data-theme="light"] .cloze-options .opt-chip{background:rgba(241,245,249,.7);border-color:rgba(203,213,225,.4);color:var(--c-dim)}
+[data-theme="light"] .cloze-options .opt-chip:hover{color:#1e293b}
+[data-theme="light"] .dict-overlay{background:rgba(15,23,42,.5)}
+[data-theme="light"] .dict-modal{background:linear-gradient(160deg,#f8fafc,#ffffff);border-color:rgba(203,213,225,.6)}
+[data-theme="light"] .dict-word{color:#0f172a}
+[data-theme="light"] .dict-phonetic{color:#0284c7}
+[data-theme="light"] .dict-pos{background:rgba(2,132,199,.08);border-color:rgba(2,132,199,.12);color:#0284c7}
+[data-theme="light"] .dict-def{color:var(--c-faint);border-left-color:rgba(2,132,199,.15)}
+[data-theme="light"] .dict-ex{color:var(--c-dim)}
+[data-theme="light"] .dict-syn span{background:rgba(13,148,136,.06);border-color:rgba(13,148,136,.12);color:#0d9488}
+[data-theme="light"] .dict-syn span:hover{background:rgba(13,148,136,.12)}
+[data-theme="light"] .dict-close{background:rgba(203,213,225,.5)}
+[data-theme="light"] .dict-close:hover{background:rgba(239,68,68,.15);color:#ef4444}
+[data-theme="light"] .dict-loading{color:var(--c-muted)}
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换主题">☀️</button>
+<div id="updateBanner" style="display:none;position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:200;background:linear-gradient(135deg,#059669,#10b981);color:#fff;padding:10px 20px;border-radius:24px;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(5,150,105,.4);animation:dictIn .3s" onclick="syncRemoteContent();this.style.display='none'">🔄 内容更新可用，点击刷新</div>
+
+<div class="container">
+  <header>
+    <h1>CET-6 英语学习助手</h1>
+    <p>词汇 · 词组 · 外刊 · 真题 | 全方位备考</p>
+  </header>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <nav>
+    <button data-view="flashcard" class="active">抽认卡</button>
+    <button data-view="quiz">测验</button>
+    <button data-view="wordlist">词汇表</button>
+    <button data-view="phrase">词组</button>
+    <button data-view="news">外刊阅读</button>
+    <button data-view="practice">六级真题</button>
+  </nav>
+
+  <!-- ═══════ 抽认卡 ═══════ -->
+  <div id="flashcard" class="view active">
+    <div class="flashcard-wrap">
+      <div class="flashcard" id="card" onclick="flipCard()">
+        <div class="front"><div class="word" id="fcWord"></div><div class="pos" id="fcPos"></div><div class="hint">点击翻转查看释义</div></div>
+        <div class="back"><div class="meaning" id="fcMeaning"></div><div class="example" id="fcExample"></div></div>
+      </div>
+    </div>
+    <div class="card-controls">
+      <button class="btn btn-gray" onclick="prevCard()">上一个</button>
+      <button class="btn btn-green" onclick="toggleKnownCard()">已掌握</button>
+      <button class="btn btn-red" onclick="markCardUnknown()">未掌握</button>
+      <button class="btn btn-gray" onclick="nextCard()">下一个</button>
+    </div>
+    <div class="card-controls" style="margin-top:8px">
+      <select class="filter-select" id="cardFilter" onchange="resetCardIndex()">
+        <option value="all">全部词汇</option><option value="unknown">未掌握</option><option value="known">已掌握</option><option value="review">📅 今日复习</option><option value="weak">🎯 薄弱词</option>
+      </select>
+      <button class="btn btn-blue" onclick="randomCard()">随机</button>
+    </div>
+  </div>
+
+  <!-- ═══════ 测验 ═══════ -->
+  <div id="quiz" class="view">
+    <div class="quiz-wrap" id="quizSetup">
+      <div style="text-align:center;margin:40px 0">
+        <p style="font-size:1.2rem;margin-bottom:20px">选择测验模式</p>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-blue" onclick="startQuiz(10)">10 题快速</button>
+          <button class="btn btn-blue" onclick="startQuiz(20)">20 题标准</button>
+          <button class="btn btn-blue" onclick="startQuiz(50)">50 题挑战</button>
+          <button class="btn btn-purple" onclick="startPhraseQuiz(15)">词组测验</button>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-green" onclick="startDaily()">🔥 每日挑战 (20词)</button>
+          <button class="btn btn-red" onclick="startWeakQuiz()" id="weakWordBtn">🎯 薄弱词专练</button>
+        </div>
+        <p style="color:var(--c-dim);margin-top:16px;font-size:.8rem">看中文释义 → 选择正确的英文</p>
+      </div>
+    </div>
+    <div class="quiz-wrap" id="quizPlay" style="display:none">
+      <div class="quiz-progress"><span id="quizNum"></span><span class="bar-wrap"><span class="bar-fill" id="quizBar" style="width:0%"></span></span><span id="quizScore"></span></div>
+      <div class="quiz-question"><div class="q-label">选择释义对应的单词/词组</div><div class="q-word" id="quizQuestion"></div></div>
+      <div class="quiz-options" id="quizOptions"></div>
+    </div>
+    <div class="quiz-wrap" id="quizEnd" style="display:none"></div>
+  </div>
+
+  <!-- ═══════ 词汇表 ═══════ -->
+  <div id="wordlist" class="view">
+    <div class="list-controls">
+      <input class="search-input" placeholder="搜索单词..." id="wordSearch" oninput="renderWordList()">
+      <select class="filter-select" id="wordFilter" onchange="renderWordList()">
+        <option value="all">全部</option><option value="known">已掌握</option><option value="unknown">未掌握</option>
+      </select>
+    </div>
+    <div style="max-height:60vh;overflow-y:auto">
+      <table class="word-table"><thead><tr><th>#</th><th>单词</th><th>释义</th><th>例句</th><th>状态</th></tr></thead><tbody id="wordListBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ═══════ 词组 ═══════ -->
+  <div id="phrase" class="view">
+    <div class="list-controls">
+      <input class="search-input" placeholder="搜索词组..." id="phraseSearch" oninput="renderPhraseList()">
+      <select class="filter-select" id="phraseFilter" onchange="renderPhraseList()">
+        <option value="all">全部分类</option><option value="写作">写作常用</option><option value="逻辑">逻辑连接</option><option value="动词">动词短语</option><option value="介词">介词短语</option><option value="其他">其他</option>
+      </select>
+    </div>
+    <div style="max-height:60vh;overflow-y:auto">
+      <table class="word-table"><thead><tr><th>#</th><th>词组</th><th>释义</th><th>分类</th><th>状态</th></tr></thead><tbody id="phraseListBody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ═══════ 外刊阅读 ═══════ -->
+  <div id="news" class="view">
+    <div class="news-source-bar" id="newsCatBar"></div>
+    <div id="newsContent"></div>
+  </div>
+
+  <!-- ═══════ 六级真题 ═══════ -->
+  <div id="practice" class="view">
+    <div class="practice-tabs">
+      <button class="active" data-sub="reading">阅读理解</button>
+      <button data-sub="cloze">完形填空</button>
+      <button data-sub="banked">选词填空</button>
+      <button data-sub="translation">翻译练习</button>
+      <button data-sub="writing">写作训练</button>
+    </div>
+    <div id="sub-reading" class="practice-subview active"></div>
+    <div id="sub-cloze" class="practice-subview"></div>
+    <div id="sub-banked" class="practice-subview"></div>
+    <div id="sub-translation" class="practice-subview"></div>
+    <div id="sub-writing" class="practice-subview"></div>
+  </div>
+</div>
+
+<!-- ═══════ Dictionary Modal ═══════ -->
+<div class="dict-overlay" id="dictOverlay" onclick="if(event.target===this)closeDict()">
+  <div class="dict-modal" id="dictModal">
+    <button class="dict-close" onclick="closeDict()">✕</button>
+    <div id="dictContent"><div class="dict-loading">查询中...</div></div>
+  </div>
+</div>
+
+<!-- ═══════ Article Reader Modal ═══════ -->
+<div class="dict-overlay" id="readOverlay" onclick="if(event.target===this)closeReader()">
+  <div class="dict-modal" style="max-width:700px;max-height:85vh">
+    <button class="dict-close" onclick="closeReader()">✕</button>
+    <div id="readContent"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════ 单词数据 ═══════════════════
+const WORDS = [
+  {en:"abandon",zh:"放弃；放纵",pos:"v./n.",ex:"The ship was abandoned by its crew.",id:1},
+  {en:"abstract",zh:"摘要；抽象概念",pos:"n./adj.",ex:"Please write an abstract of this article.",id:2},
+  {en:"abuse",zh:"滥用；虐待",pos:"n./v.",ex:"drug abuse / child abuse",id:3},
+  {en:"academy",zh:"学院；研究院",pos:"n.",ex:"Chinese Academy of Sciences",id:4},
+  {en:"access",zh:"通道；获取权",pos:"n.",ex:"have access to the Internet",id:5},
+  {en:"accommodation",zh:"住宿；膳宿",pos:"n.",ex:"provide accommodation for students",id:6},
+  {en:"acknowledge",zh:"承认；致谢",pos:"v.",ex:"He acknowledged his mistake.",id:7},
+  {en:"acquisition",zh:"获得；收购",pos:"n.",ex:"language acquisition / company acquisition",id:8},
+  {en:"adaptation",zh:"适应；改编",pos:"n.",ex:"the film adaptation of the novel",id:9},
+  {en:"adequate",zh:"足够的；适当的",pos:"adj.",ex:"adequate supply of water",id:10},
+  {en:"adjacent",zh:"邻近的",pos:"adj.",ex:"The garden is adjacent to the house.",id:11},
+  {en:"adolescent",zh:"青少年",pos:"n./adj.",ex:"adolescent problems",id:12},
+  {en:"adverse",zh:"不利的；相反的",pos:"adj.",ex:"adverse effect",id:13},
+  {en:"advocate",zh:"提倡者；倡导",pos:"n./v.",ex:"an advocate of free speech",id:14},
+  {en:"agenda",zh:"议程；日程",pos:"n.",ex:"set the agenda",id:15},
+  {en:"aggressive",zh:"侵略的；有进取心的",pos:"adj.",ex:"aggressive marketing strategy",id:16},
+  {en:"allocate",zh:"分配",pos:"v.",ex:"allocate resources",id:17},
+  {en:"alternative",zh:"替代方案",pos:"n./adj.",ex:"have no alternative but to...",id:18},
+  {en:"ambiguous",zh:"模糊的；模棱两可的",pos:"adj.",ex:"an ambiguous answer",id:19},
+  {en:"amendment",zh:"修正案；修改",pos:"n.",ex:"constitutional amendment",id:20},
+  {en:"analogy",zh:"类比；相似",pos:"n.",ex:"draw an analogy between A and B",id:21},
+  {en:"annual",zh:"每年的；年刊",pos:"adj./n.",ex:"annual report",id:22},
+  {en:"anticipate",zh:"预期；预见",pos:"v.",ex:"We anticipate that demand will increase.",id:23},
+  {en:"apparent",zh:"明显的；表面上的",pos:"adj.",ex:"for no apparent reason",id:24},
+  {en:"appreciate",zh:"欣赏；感激；升值",pos:"v.",ex:"I really appreciate your help.",id:25},
+  {en:"approach",zh:"方法；途径；接近",pos:"n./v.",ex:"a new approach to learning English",id:26},
+  {en:"arbitrary",zh:"任意的；武断的",pos:"adj.",ex:"an arbitrary decision",id:27},
+  {en:"assess",zh:"评估；评定",pos:"v.",ex:"assess the damage",id:28},
+  {en:"assign",zh:"分配；指派",pos:"v.",ex:"assign tasks to team members",id:29},
+  {en:"assumption",zh:"假设",pos:"n.",ex:"on the assumption that...",id:30},
+  {en:"atmosphere",zh:"气氛；大气",pos:"n.",ex:"a friendly atmosphere",id:31},
+  {en:"attribute",zh:"属性；归因于",pos:"n./v.",ex:"attribute A to B",id:32},
+  {en:"authority",zh:"权威；当局",pos:"n.",ex:"local authorities",id:33},
+  {en:"available",zh:"可用的",pos:"adj.",ex:"be available for",id:34},
+  {en:"barrier",zh:"障碍；壁垒",pos:"n.",ex:"language barrier",id:35},
+  {en:"budget",zh:"预算",pos:"n./v.",ex:"be on a tight budget",id:36},
+  {en:"capacity",zh:"能力；容量",pos:"n.",ex:"production capacity",id:37},
+  {en:"category",zh:"类别",pos:"n.",ex:"fall into the category of...",id:38},
+  {en:"characteristic",zh:"特征",pos:"n./adj.",ex:"personal characteristics",id:39},
+  {en:"circumstance",zh:"情况；环境",pos:"n.",ex:"under no circumstances",id:40},
+  {en:"colleague",zh:"同事",pos:"n.",ex:"a former colleague",id:41},
+  {en:"commission",zh:"委员会；佣金；委托",pos:"n./v.",ex:"work on commission",id:42},
+  {en:"commitment",zh:"承诺；投入",pos:"n.",ex:"make a commitment",id:43},
+  {en:"community",zh:"社区；团体",pos:"n.",ex:"international community",id:44},
+  {en:"compensation",zh:"补偿；赔偿金",pos:"n.",ex:"claim compensation",id:45},
+  {en:"component",zh:"组成部分；部件",pos:"n.",ex:"key components",id:46},
+  {en:"concentration",zh:"集中；专注；浓度",pos:"n.",ex:"lose concentration",id:47},
+  {en:"concept",zh:"概念",pos:"n.",ex:"grasp the concept",id:48},
+  {en:"conflict",zh:"冲突",pos:"n./v.",ex:"armed conflict",id:49},
+  {en:"consequence",zh:"后果",pos:"n.",ex:"bear the consequences",id:50},
+  {en:"conservation",zh:"保护；保存",pos:"n.",ex:"energy conservation",id:51},
+  {en:"consistent",zh:"一致的",pos:"adj.",ex:"be consistent with...",id:52},
+  {en:"constitution",zh:"宪法；构成",pos:"n.",ex:"violate the constitution",id:53},
+  {en:"consumption",zh:"消费；消耗",pos:"n.",ex:"fuel consumption",id:54},
+  {en:"contemporary",zh:"当代的；同时代的",pos:"adj.",ex:"contemporary art",id:55},
+  {en:"controversy",zh:"争议",pos:"n.",ex:"arouse controversy",id:56},
+  {en:"convention",zh:"惯例；大会；公约",pos:"n.",ex:"social conventions",id:57},
+  {en:"coordinate",zh:"协调；坐标",pos:"v./n.",ex:"coordinate efforts",id:58},
+  {en:"corporation",zh:"公司；法人",pos:"n.",ex:"multinational corporation",id:59},
+  {en:"correspond",zh:"对应；通信",pos:"v.",ex:"correspond to/with...",id:60},
+  {en:"demonstrate",zh:"展示；证明；示威",pos:"v.",ex:"demonstrate one's ability",id:61},
+  {en:"deny",zh:"否认；拒绝给予",pos:"v.",ex:"deny doing sth.",id:62},
+  {en:"derive",zh:"源自；获得",pos:"v.",ex:"derive from",id:63},
+  {en:"detect",zh:"察觉；发现",pos:"v.",ex:"detect a change",id:64},
+  {en:"deteriorate",zh:"恶化",pos:"v.",ex:"His health deteriorated rapidly.",id:65},
+  {en:"devise",zh:"设计；发明",pos:"v.",ex:"devise a plan",id:66},
+  {en:"devote",zh:"致力于；奉献",pos:"v.",ex:"devote oneself to...",id:67},
+  {en:"discipline",zh:"纪律；学科；训练",pos:"n./v.",ex:"self-discipline",id:68},
+  {en:"discount",zh:"打折",pos:"n./v.",ex:"at a discount",id:69},
+  {en:"display",zh:"展示",pos:"n./v.",ex:"on display",id:70},
+  {en:"dispose",zh:"处置",pos:"v.",ex:"dispose of waste",id:71},
+  {en:"distinctive",zh:"独特的",pos:"adj.",ex:"distinctive features",id:72},
+  {en:"distinguish",zh:"区分",pos:"v.",ex:"distinguish A from B",id:73},
+  {en:"distribution",zh:"分配；分布",pos:"n.",ex:"income distribution",id:74},
+  {en:"diversity",zh:"多样性",pos:"n.",ex:"cultural diversity",id:75},
+  {en:"domestic",zh:"国内的；家庭的",pos:"adj.",ex:"domestic violence",id:76},
+  {en:"dominate",zh:"主导；支配",pos:"v.",ex:"dominate the market",id:77},
+  {en:"draft",zh:"草案；草稿",pos:"n./v.",ex:"first draft",id:78},
+  {en:"dramatic",zh:"戏剧性的；剧烈的",pos:"adj.",ex:"a dramatic change",id:79},
+  {en:"duration",zh:"持续期间",pos:"n.",ex:"for the duration of...",id:80},
+  {en:"dynamic",zh:"动态的；有活力的",pos:"adj.",ex:"a dynamic leader",id:81},
+  {en:"elaborate",zh:"精心制作的；详细说明",pos:"adj./v.",ex:"elaborate on...",id:82},
+  {en:"eliminate",zh:"消除",pos:"v.",ex:"eliminate poverty",id:83},
+  {en:"emerge",zh:"浮现；出现",pos:"v.",ex:"emerge from",id:84},
+  {en:"emphasis",zh:"强调",pos:"n.",ex:"put emphasis on...",id:85},
+  {en:"enable",zh:"使能够",pos:"v.",ex:"enable sb. to do sth.",id:86},
+  {en:"enforce",zh:"执行；强制执行",pos:"v.",ex:"enforce the law",id:87},
+  {en:"enhance",zh:"增强",pos:"v.",ex:"enhance efficiency",id:88},
+  {en:"enormous",zh:"巨大的",pos:"adj.",ex:"enormous pressure",id:89},
+  {en:"ensure",zh:"确保",pos:"v.",ex:"ensure that...",id:90},
+  {en:"enterprise",zh:"企业；进取心",pos:"n.",ex:"private enterprise",id:91},
+  {en:"enthusiasm",zh:"热情",pos:"n.",ex:"show enthusiasm for",id:92},
+  {en:"equivalent",zh:"等价的；等同物",pos:"adj./n.",ex:"be equivalent to...",id:93},
+  {en:"establish",zh:"建立",pos:"v.",ex:"establish contact",id:94},
+  {en:"evaluate",zh:"评价；评估",pos:"v.",ex:"evaluate performance",id:95},
+  {en:"evolution",zh:"进化；演变",pos:"n.",ex:"theory of evolution",id:96},
+  {en:"exceed",zh:"超过",pos:"v.",ex:"exceed expectations",id:97},
+  {en:"exclusive",zh:"独家的；排他的",pos:"adj.",ex:"exclusive interview",id:98},
+  {en:"executive",zh:"行政的；高管",pos:"adj./n.",ex:"chief executive",id:99},
+  {en:"exploit",zh:"开发；剥削",pos:"v.",ex:"exploit natural resources",id:100},
+  {en:"external",zh:"外部的",pos:"adj.",ex:"external pressure",id:101},
+  {en:"facilitate",zh:"促进",pos:"v.",ex:"facilitate communication",id:102},
+  {en:"facility",zh:"设施",pos:"n.",ex:"sports facilities",id:103},
+  {en:"federal",zh:"联邦的",pos:"adj.",ex:"federal government",id:104},
+  {en:"flexible",zh:"灵活的",pos:"adj.",ex:"flexible working hours",id:105},
+  {en:"fluctuate",zh:"波动",pos:"v.",ex:"Prices fluctuate with the market.",id:106},
+  {en:"format",zh:"格式",pos:"n./v.",ex:"file format",id:107},
+  {en:"formula",zh:"公式；方案",pos:"n.",ex:"a formula for success",id:108},
+  {en:"foundation",zh:"基金会；基础",pos:"n.",ex:"lay the foundation for...",id:109},
+  {en:"generate",zh:"产生",pos:"v.",ex:"generate income",id:110},
+  {en:"guarantee",zh:"保证",pos:"n./v.",ex:"guarantee to do",id:111},
+  {en:"identical",zh:"完全相同的",pos:"adj.",ex:"be identical to...",id:112},
+  {en:"illustrate",zh:"说明；配插图",pos:"v.",ex:"illustrate one's point",id:113},
+  {en:"immigrant",zh:"移民（入境者）",pos:"n.",ex:"illegal immigrant",id:114},
+  {en:"implement",zh:"实施；执行",pos:"v.",ex:"implement a policy",id:115},
+  {en:"implication",zh:"含意；可能的影响",pos:"n.",ex:"political implications",id:116},
+  {en:"impose",zh:"强加；征收",pos:"v.",ex:"impose a tax",id:117},
+  {en:"incentive",zh:"激励；奖励",pos:"n.",ex:"financial incentive",id:118},
+  {en:"incorporate",zh:"合并；纳入",pos:"v.",ex:"incorporate A into B",id:119},
+  {en:"indicate",zh:"表明",pos:"v.",ex:"as the name indicates",id:120},
+  {en:"individual",zh:"个人；个体的",pos:"n./adj.",ex:"individual differences",id:121},
+  {en:"inevitable",zh:"不可避免的",pos:"adj.",ex:"It is inevitable that...",id:122},
+  {en:"infrastructure",zh:"基础设施",pos:"n.",ex:"transport infrastructure",id:123},
+  {en:"inherent",zh:"内在的；固有的",pos:"adj.",ex:"be inherent in...",id:124},
+  {en:"initiative",zh:"倡议；主动性",pos:"n.",ex:"take the initiative",id:125},
+  {en:"innovation",zh:"创新",pos:"n.",ex:"technological innovation",id:126},
+  {en:"insight",zh:"洞察力；深刻理解",pos:"n.",ex:"offer insight into",id:127},
+  {en:"institution",zh:"机构；制度",pos:"n.",ex:"financial institution",id:128},
+  {en:"integrate",zh:"融合；整合",pos:"v.",ex:"integrate A into/with B",id:129},
+  {en:"intellectual",zh:"智力的；知识分子",pos:"adj./n.",ex:"intellectual property",id:130},
+  {en:"intelligence",zh:"智力；情报",pos:"n.",ex:"artificial intelligence",id:131},
+  {en:"intense",zh:"强烈的",pos:"adj.",ex:"intense competition",id:132},
+  {en:"interpretation",zh:"解释；口译",pos:"n.",ex:"open to interpretation",id:133},
+  {en:"intervene",zh:"干预",pos:"v.",ex:"intervene in",id:134},
+  {en:"investment",zh:"投资",pos:"n.",ex:"return on investment",id:135},
+  {en:"involve",zh:"涉及；牵涉",pos:"v.",ex:"be involved in...",id:136},
+  {en:"isolate",zh:"隔离；孤立",pos:"v.",ex:"isolate A from B",id:137},
+  {en:"justify",zh:"证明…正当",pos:"v.",ex:"justify one's action",id:138},
+  {en:"landscape",zh:"风景；局面",pos:"n.",ex:"urban landscape",id:139},
+  {en:"launch",zh:"发起；推出",pos:"v.",ex:"launch a campaign",id:140},
+  {en:"legislation",zh:"法规；立法",pos:"n.",ex:"pass legislation",id:141},
+  {en:"liberal",zh:"自由的；开明的；文科",pos:"adj.",ex:"liberal arts",id:142},
+  {en:"likewise",zh:"同样地",pos:"adv.",ex:"He is likewise confused.",id:143},
+  {en:"literature",zh:"文学；文献",pos:"n.",ex:"review the literature",id:144},
+  {en:"logical",zh:"合乎逻辑的",pos:"adj.",ex:"a logical conclusion",id:145},
+  {en:"maintain",zh:"维持；维护",pos:"v.",ex:"maintain order",id:146},
+  {en:"manipulate",zh:"操纵；操作",pos:"v.",ex:"manipulate data",id:147},
+  {en:"mechanism",zh:"机制",pos:"n.",ex:"defense mechanism",id:148},
+  {en:"media",zh:"媒体",pos:"n.",ex:"social media",id:149},
+  {en:"migrate",zh:"迁移",pos:"v.",ex:"migrate to another country",id:150},
+  {en:"military",zh:"军队；军事的",pos:"n./adj.",ex:"military service",id:151},
+  {en:"minimum",zh:"最小的；最小值",pos:"adj./n.",ex:"minimum wage",id:152},
+  {en:"minority",zh:"少数；少数民族",pos:"n.",ex:"ethnic minority",id:153},
+  {en:"monitor",zh:"监视器；监视",pos:"n./v.",ex:"monitor progress",id:154},
+  {en:"motivate",zh:"激励",pos:"v.",ex:"be motivated to do",id:155},
+  {en:"mutual",zh:"相互的",pos:"adj.",ex:"mutual understanding",id:156},
+  {en:"negative",zh:"消极的；否定的",pos:"adj.",ex:"negative effect",id:157},
+  {en:"negotiate",zh:"谈判",pos:"v.",ex:"negotiate a deal",id:158},
+  {en:"network",zh:"网络；人脉",pos:"n./v.",ex:"social network",id:159},
+  {en:"nevertheless",zh:"尽管如此",pos:"adv.",ex:"It was raining; nevertheless, we went out.",id:160},
+  {en:"objective",zh:"目标；客观的",pos:"n./adj.",ex:"achieve one's objective",id:161},
+  {en:"obligation",zh:"义务；责任",pos:"n.",ex:"fulfill one's obligation",id:162},
+  {en:"obstacle",zh:"障碍",pos:"n.",ex:"overcome obstacles",id:163},
+  {en:"occupation",zh:"职业；占领",pos:"n.",ex:"a skilled occupation",id:164},
+  {en:"offensive",zh:"冒犯的；进攻的",pos:"adj.",ex:"offensive remarks",id:165},
+  {en:"opponent",zh:"对手；反对者",pos:"n.",ex:"a formidable opponent",id:166},
+  {en:"opportunity",zh:"机会",pos:"n.",ex:"seize the opportunity",id:167},
+  {en:"oppose",zh:"反对；对抗",pos:"v.",ex:"oppose the plan",id:168},
+  {en:"optimistic",zh:"乐观的",pos:"adj.",ex:"be optimistic about the future",id:169},
+  {en:"option",zh:"选择",pos:"n.",ex:"have no other option",id:170},
+  {en:"orientation",zh:"方向；定位",pos:"n.",ex:"career orientation",id:171},
+  {en:"outcome",zh:"结果",pos:"n.",ex:"the final outcome",id:172},
+  {en:"outlook",zh:"前景；观点",pos:"n.",ex:"economic outlook",id:173},
+  {en:"overcome",zh:"克服",pos:"v.",ex:"overcome difficulties",id:174},
+  {en:"overlook",zh:"忽视；俯瞰",pos:"v.",ex:"overlook the details",id:175},
+  {en:"overseas",zh:"海外的",pos:"adj./adv.",ex:"overseas markets",id:176},
+  {en:"overwhelm",zh:"压倒；使不知所措",pos:"v.",ex:"be overwhelmed by emotion",id:177},
+  {en:"panel",zh:"专门小组；面板",pos:"n.",ex:"a panel of experts",id:178},
+  {en:"paradox",zh:"悖论",pos:"n.",ex:"a fascinating paradox",id:179},
+  {en:"participate",zh:"参与",pos:"v.",ex:"participate in discussions",id:180},
+  {en:"passion",zh:"激情；热情",pos:"n.",ex:"have a passion for music",id:181},
+  {en:"passive",zh:"被动的；消极的",pos:"adj.",ex:"passive learning",id:182},
+  {en:"patent",zh:"专利",pos:"n./v.",ex:"apply for a patent",id:183},
+  {en:"perceive",zh:"感知；理解",pos:"v.",ex:"perceive the difference",id:184},
+  {en:"performance",zh:"表现；表演；性能",pos:"n.",ex:"improve performance",id:185},
+  {en:"permanent",zh:"永久的",pos:"adj.",ex:"permanent residence",id:186},
+  {en:"permission",zh:"许可",pos:"n.",ex:"without permission",id:187},
+  {en:"persist",zh:"坚持；持续",pos:"v.",ex:"persist in doing sth.",id:188},
+  {en:"personality",zh:"个性；人格",pos:"n.",ex:"a strong personality",id:189},
+  {en:"perspective",zh:"观点；视角",pos:"n.",ex:"from a different perspective",id:190},
+  {en:"phenomenon",zh:"现象",pos:"n.",ex:"a natural phenomenon",id:191},
+  {en:"philosophy",zh:"哲学",pos:"n.",ex:"philosophy of life",id:192},
+  {en:"pledge",zh:"承诺；保证",pos:"n./v.",ex:"make a pledge",id:193},
+  {en:"policy",zh:"政策",pos:"n.",ex:"foreign policy",id:194},
+  {en:"portion",zh:"部分",pos:"n.",ex:"a large portion of",id:195},
+  {en:"portray",zh:"描绘；扮演",pos:"v.",ex:"portray a character",id:196},
+  {en:"pose",zh:"造成；摆姿势",pos:"v.",ex:"pose a threat",id:197},
+  {en:"potential",zh:"潜力；潜在的",pos:"n./adj.",ex:"reach one's full potential",id:198},
+  {en:"poverty",zh:"贫困",pos:"n.",ex:"live in poverty",id:199},
+  {en:"precaution",zh:"预防措施",pos:"n.",ex:"take precautions",id:200},
+  {en:"precede",zh:"先于；在…之前",pos:"v.",ex:"the years preceding the war",id:201},
+  {en:"predict",zh:"预测",pos:"v.",ex:"predict the future",id:202},
+  {en:"prejudice",zh:"偏见",pos:"n.",ex:"racial prejudice",id:203},
+  {en:"prescribe",zh:"开药方；规定",pos:"v.",ex:"prescribe medication",id:204},
+  {en:"preserve",zh:"保存；保护",pos:"v.",ex:"preserve the environment",id:205},
+  {en:"preside",zh:"主持",pos:"v.",ex:"preside over a meeting",id:206},
+  {en:"pressure",zh:"压力",pos:"n.",ex:"under pressure",id:207},
+  {en:"presumably",zh:"大概；据推测",pos:"adv.",ex:"He is presumably at home.",id:208},
+  {en:"prevail",zh:"盛行；占优势",pos:"v.",ex:"prevail over difficulties",id:209},
+  {en:"previous",zh:"先前的",pos:"adj.",ex:"previous experience",id:210},
+  {en:"primarily",zh:"主要地",pos:"adv.",ex:"primarily because of",id:211},
+  {en:"principal",zh:"主要的；校长",pos:"adj./n.",ex:"principal reason",id:212},
+  {en:"principle",zh:"原则；原理",pos:"n.",ex:"stick to principles",id:213},
+  {en:"priority",zh:"优先事项",pos:"n.",ex:"give priority to",id:214},
+  {en:"privilege",zh:"特权",pos:"n.",ex:"a privilege to do",id:215},
+  {en:"procedure",zh:"程序；步骤",pos:"n.",ex:"standard procedure",id:216},
+  {en:"proceed",zh:"继续进行",pos:"v.",ex:"proceed with the plan",id:217},
+  {en:"proclaim",zh:"宣告；声明",pos:"v.",ex:"proclaim independence",id:218},
+  {en:"profession",zh:"职业；行业",pos:"n.",ex:"the legal profession",id:219},
+  {en:"profound",zh:"深刻的；深远的",pos:"adj.",ex:"a profound impact",id:220},
+  {en:"prohibit",zh:"禁止",pos:"v.",ex:"prohibit smoking",id:221},
+  {en:"prominent",zh:"突出的；著名的",pos:"adj.",ex:"a prominent figure",id:222},
+  {en:"promote",zh:"促进；晋升",pos:"v.",ex:"promote economic growth",id:223},
+  {en:"proportion",zh:"比例",pos:"n.",ex:"in proportion to",id:224},
+  {en:"proposal",zh:"提议；建议",pos:"n.",ex:"put forward a proposal",id:225},
+  {en:"prospect",zh:"前景；可能性",pos:"n.",ex:"job prospects",id:226},
+  {en:"prosperity",zh:"繁荣",pos:"n.",ex:"economic prosperity",id:227},
+  {en:"protective",zh:"保护的",pos:"adj.",ex:"protective measures",id:228},
+  {en:"protest",zh:"抗议",pos:"n./v.",ex:"protest against injustice",id:229},
+  {en:"provision",zh:"规定；供应；准备",pos:"n.",ex:"legal provisions",id:230},
+  {en:"provoke",zh:"激起；挑衅",pos:"v.",ex:"provoke a debate",id:231},
+  {en:"psychological",zh:"心理的",pos:"adj.",ex:"psychological pressure",id:232},
+  {en:"purchase",zh:"购买",pos:"v./n.",ex:"purchase online",id:233},
+  {en:"pursue",zh:"追求；追赶",pos:"v.",ex:"pursue a career",id:234},
+  {en:"qualification",zh:"资格；条件",pos:"n.",ex:"professional qualifications",id:235},
+  {en:"radical",zh:"根本的；激进的",pos:"adj.",ex:"radical changes",id:236},
+  {en:"random",zh:"随机的",pos:"adj.",ex:"at random",id:237},
+  {en:"range",zh:"范围；一系列",pos:"n./v.",ex:"a wide range of",id:238},
+  {en:"ratio",zh:"比率",pos:"n.",ex:"the ratio of A to B",id:239},
+  {en:"rational",zh:"理性的",pos:"adj.",ex:"rational thinking",id:240},
+  {en:"readily",zh:"乐意地；容易地",pos:"adv.",ex:"readily accept",id:241},
+  {en:"realm",zh:"领域；王国",pos:"n.",ex:"in the realm of science",id:242},
+  {en:"reasonable",zh:"合理的",pos:"adj.",ex:"reasonable price",id:243},
+  {en:"recession",zh:"衰退；不景气",pos:"n.",ex:"economic recession",id:244},
+  {en:"reckon",zh:"认为；估算",pos:"v.",ex:"I reckon that...",id:245},
+  {en:"recognition",zh:"承认；认可",pos:"n.",ex:"gain recognition",id:246},
+  {en:"recommend",zh:"推荐；建议",pos:"v.",ex:"recommend a book",id:247},
+  {en:"reconcile",zh:"调和；使和解",pos:"v.",ex:"reconcile A with B",id:248},
+  {en:"recovery",zh:"恢复；复原",pos:"n.",ex:"economic recovery",id:249},
+  {en:"recruit",zh:"招募",pos:"v./n.",ex:"recruit employees",id:250},
+  {en:"reduction",zh:"减少",pos:"n.",ex:"a significant reduction",id:251},
+  {en:"refer",zh:"提到；参考",pos:"v.",ex:"refer to the manual",id:252},
+  {en:"reflection",zh:"反映；反思",pos:"n.",ex:"self-reflection",id:253},
+  {en:"reform",zh:"改革",pos:"n./v.",ex:"education reform",id:254},
+  {en:"regarding",zh:"关于",pos:"prep.",ex:"information regarding",id:255},
+  {en:"register",zh:"登记；注册",pos:"v./n.",ex:"register an account",id:256},
+  {en:"regulate",zh:"调节；管理",pos:"v.",ex:"regulate the market",id:257},
+  {en:"reinforce",zh:"加强；增援",pos:"v.",ex:"reinforce the argument",id:258},
+  {en:"reject",zh:"拒绝；排斥",pos:"v.",ex:"reject the proposal",id:259},
+  {en:"relate",zh:"联系；相关",pos:"v.",ex:"relate to daily life",id:260},
+  {en:"release",zh:"释放；发布",pos:"v./n.",ex:"release a new product",id:261},
+  {en:"relevant",zh:"相关的",pos:"adj.",ex:"relevant information",id:262},
+  {en:"relief",zh:"减轻；救济",pos:"n.",ex:"a sense of relief",id:263},
+  {en:"reluctant",zh:"不情愿的",pos:"adj.",ex:"be reluctant to change",id:264},
+  {en:"rely",zh:"依赖；信赖",pos:"v.",ex:"rely heavily on",id:265},
+  {en:"remain",zh:"保持；剩余",pos:"v.",ex:"remain unchanged",id:266},
+  {en:"remark",zh:"评论；注意到",pos:"n./v.",ex:"make a remark",id:267},
+  {en:"remedy",zh:"补救；治疗",pos:"n./v.",ex:"a remedy for the problem",id:268},
+  {en:"remote",zh:"遥远的；偏僻的",pos:"adj.",ex:"remote areas",id:269},
+  {en:"render",zh:"使成为；提供",pos:"v.",ex:"render assistance",id:270},
+  {en:"renew",zh:"更新；续期",pos:"v.",ex:"renew a contract",id:271},
+  {en:"replace",zh:"取代",pos:"v.",ex:"replace A with B",id:272},
+  {en:"represent",zh:"代表；表现",pos:"v.",ex:"represent the company",id:273},
+  {en:"reputation",zh:"名声",pos:"n.",ex:"damage one's reputation",id:274},
+  {en:"requirement",zh:"要求",pos:"n.",ex:"meet the requirements",id:275},
+  {en:"resemble",zh:"类似于",pos:"v.",ex:"resemble each other",id:276},
+  {en:"reserve",zh:"保留；预订",pos:"v./n.",ex:"reserve a table",id:277},
+  {en:"resign",zh:"辞职；顺从",pos:"v.",ex:"resign from one's job",id:278},
+  {en:"resist",zh:"抵抗；抗拒",pos:"v.",ex:"resist temptation",id:279},
+  {en:"resolution",zh:"决议；决心；分辨率",pos:"n.",ex:"New Year's resolution",id:280},
+  {en:"resolve",zh:"解决；决心",pos:"v./n.",ex:"resolve conflicts",id:281},
+  {en:"resource",zh:"资源",pos:"n.",ex:"natural resources",id:282},
+  {en:"respond",zh:"回应",pos:"v.",ex:"respond to the question",id:283},
+  {en:"restore",zh:"恢复；修复",pos:"v.",ex:"restore order",id:284},
+  {en:"restrain",zh:"抑制；约束",pos:"v.",ex:"restrain oneself",id:285},
+  {en:"restrict",zh:"限制",pos:"v.",ex:"restrict access",id:286},
+  {en:"retain",zh:"保留；保持",pos:"v.",ex:"retain the original style",id:287},
+  {en:"retreat",zh:"撤退；退避",pos:"v./n.",ex:"retreat from the market",id:288},
+  {en:"reveal",zh:"揭示；透露",pos:"v.",ex:"reveal the secret",id:289},
+  {en:"revenge",zh:"报复",pos:"n./v.",ex:"take revenge on",id:290},
+  {en:"revenue",zh:"收入；税收",pos:"n.",ex:"tax revenue",id:291},
+  {en:"reverse",zh:"相反；逆转",pos:"v./adj.",ex:"reverse the trend",id:292},
+  {en:"revise",zh:"修订；复习",pos:"v.",ex:"revise the manuscript",id:293},
+  {en:"revolution",zh:"革命；巨变",pos:"n.",ex:"the Industrial Revolution",id:294},
+  {en:"reward",zh:"奖励；回报",pos:"n./v.",ex:"reward for hard work",id:295},
+  {en:"rigid",zh:"严格的；僵硬的",pos:"adj.",ex:"rigid rules",id:296},
+  {en:"rival",zh:"对手；竞争的",pos:"n./adj.",ex:"a business rival",id:297},
+  {en:"routine",zh:"常规；日常的",pos:"n./adj.",ex:"daily routine",id:298},
+  {en:"sacrifice",zh:"牺牲；献祭",pos:"n./v.",ex:"make sacrifices",id:299},
+  {en:"scale",zh:"规模；等级",pos:"n.",ex:"on a large scale",id:300},
+  {en:"scandal",zh:"丑闻",pos:"n.",ex:"a political scandal",id:301},
+  {en:"scarcely",zh:"几乎不",pos:"adv.",ex:"scarcely any time",id:302},
+  {en:"schedule",zh:"日程；安排",pos:"n./v.",ex:"behind schedule",id:303},
+  {en:"scheme",zh:"计划；方案",pos:"n./v.",ex:"a pension scheme",id:304},
+  {en:"scope",zh:"范围；机会",pos:"n.",ex:"beyond the scope of",id:305},
+  {en:"security",zh:"安全；证券",pos:"n.",ex:"national security",id:306},
+  {en:"sensitive",zh:"敏感的",pos:"adj.",ex:"sensitive issue",id:307},
+  {en:"sequence",zh:"顺序；一连串",pos:"n.",ex:"in sequence",id:308},
+  {en:"severe",zh:"严重的；严厉的",pos:"adj.",ex:"severe damage",id:309},
+  {en:"shelter",zh:"庇护所；遮蔽",pos:"n./v.",ex:"seek shelter",id:310},
+  {en:"shield",zh:"盾；保护",pos:"n./v.",ex:"shield from harm",id:311},
+  {en:"shift",zh:"转移；轮班",pos:"v./n.",ex:"a fundamental shift",id:312},
+  {en:"shortage",zh:"短缺",pos:"n.",ex:"water shortage",id:313},
+  {en:"signal",zh:"信号；标志",pos:"n./v.",ex:"send a signal",id:314},
+  {en:"significance",zh:"重要性",pos:"n.",ex:"of great significance",id:315},
+  {en:"simplify",zh:"简化",pos:"v.",ex:"simplify the process",id:316},
+  {en:"skeptical",zh:"怀疑的",pos:"adj.",ex:"be skeptical about",id:317},
+  {en:"slight",zh:"轻微的",pos:"adj.",ex:"a slight difference",id:318},
+  {en:"sole",zh:"唯一的；单独的",pos:"adj.",ex:"the sole reason",id:319},
+  {en:"source",zh:"来源",pos:"n.",ex:"a reliable source",id:320},
+  {en:"span",zh:"跨度；持续时间",pos:"n./v.",ex:"attention span",id:321},
+  {en:"specify",zh:"明确说明",pos:"v.",ex:"specify the requirements",id:322},
+  {en:"splendid",zh:"极好的；壮丽的",pos:"adj.",ex:"a splendid view",id:323},
+  {en:"split",zh:"分裂；分开",pos:"v./n.",ex:"split into groups",id:324},
+  {en:"sponsor",zh:"赞助者；赞助",pos:"n./v.",ex:"sponsor the event",id:325},
+  {en:"stability",zh:"稳定",pos:"n.",ex:"political stability",id:326},
+  {en:"status",zh:"地位；状态",pos:"n.",ex:"social status",id:327},
+  {en:"steady",zh:"稳定的；稳步的",pos:"adj.",ex:"steady progress",id:328},
+  {en:"stem",zh:"起源于；茎",pos:"v./n.",ex:"stem from",id:329},
+  {en:"stimulate",zh:"刺激；激励",pos:"v.",ex:"stimulate the economy",id:330},
+  {en:"strategy",zh:"策略",pos:"n.",ex:"marketing strategy",id:331},
+  {en:"stress",zh:"压力；强调",pos:"n./v.",ex:"lay stress on",id:332},
+  {en:"stretch",zh:"伸展；延伸",pos:"v./n.",ex:"stretch one's legs",id:333},
+  {en:"strive",zh:"努力；奋斗",pos:"v.",ex:"strive for excellence",id:334},
+  {en:"structure",zh:"结构",pos:"n./v.",ex:"organizational structure",id:335},
+  {en:"submit",zh:"提交；屈服",pos:"v.",ex:"submit a report",id:336},
+  {en:"subordinate",zh:"下属；从属的",pos:"n./adj.",ex:"subordinate to",id:337},
+  {en:"subsequent",zh:"随后的",pos:"adj.",ex:"subsequent events",id:338},
+  {en:"subsidy",zh:"补贴",pos:"n.",ex:"government subsidy",id:339},
+  {en:"substantial",zh:"大量的；实质的",pos:"adj.",ex:"substantial evidence",id:340},
+  {en:"substitute",zh:"替代品；替代",pos:"n./v.",ex:"substitute A for B",id:341},
+  {en:"succession",zh:"连续；继承",pos:"n.",ex:"in succession",id:342},
+  {en:"sufficient",zh:"足够的",pos:"adj.",ex:"sufficient evidence",id:343},
+  {en:"summit",zh:"峰会；山顶",pos:"n.",ex:"a summit meeting",id:344},
+  {en:"supervise",zh:"监督；管理",pos:"v.",ex:"supervise the project",id:345},
+  {en:"supplement",zh:"补充",pos:"n./v.",ex:"a supplement to the diet",id:346},
+  {en:"suppress",zh:"压制；抑制",pos:"v.",ex:"suppress emotions",id:347},
+  {en:"supreme",zh:"最高的；极度的",pos:"adj.",ex:"supreme court",id:348},
+  {en:"surplus",zh:"盈余；过剩",pos:"n./adj.",ex:"trade surplus",id:349},
+  {en:"surrender",zh:"投降；交出",pos:"v./n.",ex:"surrender to the enemy",id:350},
+  {en:"survey",zh:"调查；测量",pos:"n./v.",ex:"conduct a survey",id:351},
+  {en:"survive",zh:"幸存；生存",pos:"v.",ex:"survive the disaster",id:352},
+  {en:"suspect",zh:"怀疑；嫌疑人",pos:"v./n.",ex:"suspect him of lying",id:353},
+  {en:"suspend",zh:"暂停；悬挂",pos:"v.",ex:"suspend operations",id:354},
+  {en:"suspicion",zh:"怀疑",pos:"n.",ex:"above suspicion",id:355},
+  {en:"sustain",zh:"维持；承受",pos:"v.",ex:"sustain economic growth",id:356},
+  {en:"symbol",zh:"象征；符号",pos:"n.",ex:"a symbol of freedom",id:357},
+  {en:"sympathy",zh:"同情",pos:"n.",ex:"express sympathy",id:358},
+  {en:"symptom",zh:"症状；征兆",pos:"n.",ex:"symptoms of the disease",id:359},
+  {en:"tackle",zh:"处理； tackle the problem",pos:"v.",ex:"tackle the issue",id:360},
+  {en:"target",zh:"目标",pos:"n./v.",ex:"achieve the target",id:361},
+  {en:"technique",zh:"技术；技巧",pos:"n.",ex:"advanced techniques",id:362},
+  {en:"temporary",zh:"暂时的",pos:"adj.",ex:"temporary solution",id:363},
+  {en:"tendency",zh:"趋势；倾向",pos:"n.",ex:"have a tendency to",id:364},
+  {en:"terminal",zh:"终端；末期的",pos:"n./adj.",ex:"terminal illness",id:365},
+  {en:"territory",zh:"领土；领域",pos:"n.",ex:"unknown territory",id:366},
+  {en:"testify",zh:"作证；证明",pos:"v.",ex:"testify in court",id:367},
+  {en:"thorough",zh:"彻底的；全面的",pos:"adj.",ex:"a thorough investigation",id:368},
+  {en:"threat",zh:"威胁",pos:"n.",ex:"pose a threat to",id:369},
+  {en:"thrive",zh:"繁荣；茁壮成长",pos:"v.",ex:"thrive in the new environment",id:370},
+  {en:"tolerate",zh:"容忍",pos:"v.",ex:"tolerate differences",id:371},
+  {en:"trace",zh:"追踪；痕迹",pos:"v./n.",ex:"trace back to",id:372},
+  {en:"tradition",zh:"传统",pos:"n.",ex:"cultural tradition",id:373},
+  {en:"transfer",zh:"转移；调动",pos:"v./n.",ex:"transfer money",id:374},
+  {en:"transform",zh:"改变；转换",pos:"v.",ex:"transform the industry",id:375},
+  {en:"transition",zh:"过渡；转变",pos:"n.",ex:"a smooth transition",id:376},
+  {en:"transmission",zh:"传输；传播",pos:"n.",ex:"data transmission",id:377},
+  {en:"transparent",zh:"透明的",pos:"adj.",ex:"transparent process",id:378},
+  {en:"transport",zh:"运输",pos:"v./n.",ex:"public transport",id:379},
+  {en:"treaty",zh:"条约",pos:"n.",ex:"sign a treaty",id:380},
+  {en:"tremendous",zh:"巨大的",pos:"adj.",ex:"tremendous effort",id:381},
+  {en:"trend",zh:"趋势",pos:"n.",ex:"follow the trend",id:382},
+  {en:"trigger",zh:"触发",pos:"v./n.",ex:"trigger a reaction",id:383},
+  {en:"triumph",zh:"胜利；战胜",pos:"n./v.",ex:"a great triumph",id:384},
+  {en:"tuition",zh:"学费；教学",pos:"n.",ex:"tuition fees",id:385},
+  {en:"ultimate",zh:"最终的；根本的",pos:"adj.",ex:"the ultimate goal",id:386},
+  {en:"undergo",zh:"经历",pos:"v.",ex:"undergo a transformation",id:387},
+  {en:"undermine",zh:"削弱；破坏",pos:"v.",ex:"undermine confidence",id:388},
+  {en:"undertake",zh:"承担；从事",pos:"v.",ex:"undertake a task",id:389},
+  {en:"unemployment",zh:"失业",pos:"n.",ex:"unemployment rate",id:390},
+  {en:"unexpected",zh:"出乎意料的",pos:"adj.",ex:"unexpected result",id:391},
+  {en:"unique",zh:"独特的",pos:"adj.",ex:"a unique opportunity",id:392},
+  {en:"universal",zh:"普遍的；通用的",pos:"adj.",ex:"universal truth",id:393},
+  {en:"urban",zh:"城市的",pos:"adj.",ex:"urban development",id:394},
+  {en:"urge",zh:"催促；强烈要求",pos:"v./n.",ex:"urge sb. to do",id:395},
+  {en:"utilize",zh:"利用",pos:"v.",ex:"utilize resources",id:396},
+  {en:"utterly",zh:"完全地",pos:"adv.",ex:"utterly different",id:397},
+  {en:"vacant",zh:"空的；空缺的",pos:"adj.",ex:"a vacant position",id:398},
+  {en:"valid",zh:"有效的；合理的",pos:"adj.",ex:"a valid argument",id:399},
+  {en:"variety",zh:"多样性；种类",pos:"n.",ex:"a variety of reasons",id:400},
+  {en:"verify",zh:"核实；验证",pos:"v.",ex:"verify the information",id:401},
+  {en:"version",zh:"版本；说法",pos:"n.",ex:"the latest version",id:402},
+  {en:"vessel",zh:"船只；容器",pos:"n.",ex:"blood vessel",id:403},
+  {en:"via",zh:"通过；经由",pos:"prep.",ex:"via the Internet",id:404},
+  {en:"victim",zh:"受害者",pos:"n.",ex:"victims of the disaster",id:405},
+  {en:"vigorous",zh:"有力的；精力充沛的",pos:"adj.",ex:"vigorous debate",id:406},
+  {en:"violate",zh:"违反；侵犯",pos:"v.",ex:"violate the law",id:407},
+  {en:"virtual",zh:"虚拟的；实际上的",pos:"adj.",ex:"virtual reality",id:408},
+  {en:"virtue",zh:"美德；优点",pos:"n.",ex:"by virtue of",id:409},
+  {en:"vision",zh:"视力；愿景",pos:"n.",ex:"a clear vision",id:410},
+  {en:"visual",zh:"视觉的",pos:"adj.",ex:"visual effect",id:411},
+  {en:"vital",zh:"至关重要的",pos:"adj.",ex:"play a vital role",id:412},
+  {en:"vivid",zh:"生动的",pos:"adj.",ex:"vivid memory",id:413},
+  {en:"volume",zh:"体积；音量；卷",pos:"n.",ex:"the volume of traffic",id:414},
+  {en:"voluntary",zh:"自愿的",pos:"adj.",ex:"voluntary work",id:415},
+  {en:"vulnerable",zh:"脆弱的；易受伤的",pos:"adj.",ex:"vulnerable group",id:416},
+  {en:"warrant",zh:"授权；保证",pos:"n./v.",ex:"search warrant",id:417},
+  {en:"welfare",zh:"福利；幸福",pos:"n.",ex:"social welfare",id:418},
+  {en:"whereas",zh:"然而；鉴于",pos:"conj.",ex:"He is outgoing, whereas she is shy.",id:419},
+  {en:"widespread",zh:"广泛的",pos:"adj.",ex:"widespread concern",id:420},
+  {en:"withdraw",zh:"撤回；退出",pos:"v.",ex:"withdraw money",id:421},
+  {en:"withstand",zh:"承受；抵挡",pos:"v.",ex:"withstand pressure",id:422},
+  {en:"witness",zh:"目击者；见证",pos:"n./v.",ex:"witness the event",id:423},
+  {en:"worthwhile",zh:"值得的",pos:"adj.",ex:"a worthwhile experience",id:424},
+  {en:"yield",zh:"产出；屈服",pos:"v./n.",ex:"yield to pressure",id:425},
+  {en:"accelerate",zh:"加速",pos:"v.",ex:"accelerate the process",id:426},
+  {en:"accessible",zh:"可接近的；易进入的",pos:"adj.",ex:"accessible to the public",id:427},
+  {en:"accompany",zh:"陪伴；伴随",pos:"v.",ex:"accompany the singer on piano",id:428},
+  {en:"accomplish",zh:"完成；实现",pos:"v.",ex:"accomplish a goal",id:429},
+  {en:"accumulate",zh:"积累",pos:"v.",ex:"accumulate wealth",id:430},
+  {en:"accuracy",zh:"准确性",pos:"n.",ex:"with great accuracy",id:431},
+  {en:"accuse",zh:"指控；指责",pos:"v.",ex:"accuse sb. of stealing",id:432},
+  {en:"accustomed",zh:"习惯于",pos:"adj.",ex:"be accustomed to",id:433},
+  {en:"achieve",zh:"实现；达到",pos:"v.",ex:"achieve success",id:434},
+  {en:"acquaint",zh:"使熟悉",pos:"v.",ex:"acquaint oneself with",id:435},
+  {en:"activate",zh:"激活",pos:"v.",ex:"activate the system",id:436},
+  {en:"acute",zh:"急性的；敏锐的",pos:"adj.",ex:"acute pain",id:437},
+  {en:"address",zh:"处理；地址",pos:"v./n.",ex:"address the issue",id:438},
+  {en:"adhere",zh:"黏附；坚持",pos:"v.",ex:"adhere to the principle",id:439},
+  {en:"adjust",zh:"调整",pos:"v.",ex:"adjust to the new environment",id:440},
+  {en:"administration",zh:"管理；行政",pos:"n.",ex:"business administration",id:441},
+  {en:"adopt",zh:"采纳；收养",pos:"v.",ex:"adopt a new approach",id:442},
+  {en:"affection",zh:"喜爱；感情",pos:"n.",ex:"show affection for",id:443},
+  {en:"agency",zh:"机构；代理",pos:"n.",ex:"travel agency",id:444},
+  {en:"aggravate",zh:"加重；使恶化",pos:"v.",ex:"aggravate the situation",id:445},
+  {en:"alert",zh:"警觉的；警报",pos:"adj./n.",ex:"stay alert",id:446},
+  {en:"allege",zh:"声称；指控",pos:"v.",ex:"allege that...",id:447},
+  {en:"alleviate",zh:"减轻；缓解",pos:"v.",ex:"alleviate pain",id:448},
+  {en:"alliance",zh:"联盟",pos:"n.",ex:"form an alliance",id:449},
+  {en:"alter",zh:"改变；修改",pos:"v.",ex:"alter the plan",id:450},
+  {en:"altitude",zh:"海拔；高度",pos:"n.",ex:"at high altitude",id:451},
+  {en:"amaze",zh:"使惊奇",pos:"v.",ex:"amaze everyone",id:452},
+  {en:"ambitious",zh:"有雄心的",pos:"adj.",ex:"ambitious plan",id:453},
+  {en:"amend",zh:"修改；修正",pos:"v.",ex:"amend the law",id:454},
+  {en:"ample",zh:"充足的；宽敞的",pos:"adj.",ex:"ample evidence",id:455},
+  {en:"anchor",zh:"锚；固定",pos:"n./v.",ex:"anchor the boat",id:456},
+  {en:"anniversary",zh:"周年纪念",pos:"n.",ex:"wedding anniversary",id:457},
+  {en:"anonymous",zh:"匿名的",pos:"adj.",ex:"anonymous letter",id:458},
+  {en:"appetite",zh:"食欲；欲望",pos:"n.",ex:"appetite for knowledge",id:459},
+  {en:"appliance",zh:"电器；器具",pos:"n.",ex:"household appliances",id:460},
+  {en:"applicant",zh:"申请人",pos:"n.",ex:"job applicant",id:461},
+  {en:"appoint",zh:"任命；约定",pos:"v.",ex:"appoint a manager",id:462},
+  {en:"arouse",zh:"唤起；激起",pos:"v.",ex:"arouse interest",id:463},
+  {en:"arrange",zh:"安排",pos:"v.",ex:"arrange a meeting",id:464},
+  {en:"artificial",zh:"人工的；人造的",pos:"adj.",ex:"artificial intelligence",id:465},
+  {en:"ascend",zh:"上升；攀登",pos:"v.",ex:"ascend the mountain",id:466},
+  {en:"aspect",zh:"方面",pos:"n.",ex:"every aspect of life",id:467},
+  {en:"aspiration",zh:"抱负；渴望",pos:"n.",ex:"career aspirations",id:468},
+  {en:"assault",zh:"攻击",pos:"n./v.",ex:"physical assault",id:469},
+  {en:"assemble",zh:"集合；组装",pos:"v.",ex:"assemble a team",id:470},
+  {en:"assert",zh:"断言；坚持",pos:"v.",ex:"assert one's rights",id:471},
+  {en:"asset",zh:"资产；优点",pos:"n.",ex:"valuable asset",id:472},
+  {en:"associate",zh:"联系；关联",pos:"v./n.",ex:"associate A with B",id:473},
+  {en:"assume",zh:"假设；承担",pos:"v.",ex:"assume responsibility",id:474},
+  {en:"assure",zh:"保证；使确信",pos:"v.",ex:"assure sb. that...",id:475},
+  {en:"attach",zh:"附上；重视",pos:"v.",ex:"attach importance to",id:476},
+  {en:"attain",zh:"达到；获得",pos:"v.",ex:"attain the goal",id:477},
+  {en:"attendance",zh:"出席；出勤",pos:"n.",ex:"attendance rate",id:478},
+  {en:"auction",zh:"拍卖",pos:"n./v.",ex:"sell at auction",id:479},
+  {en:"authentic",zh:"真实的；正宗的",pos:"adj.",ex:"authentic document",id:480},
+  {en:"authorize",zh:"授权",pos:"v.",ex:"authorize the payment",id:481},
+  {en:"automate",zh:"自动化",pos:"v.",ex:"automate the process",id:482},
+  {en:"autonomy",zh:"自治；自主",pos:"n.",ex:"regional autonomy",id:483},
+  {en:"aviation",zh:"航空",pos:"n.",ex:"civil aviation",id:484},
+  {en:"awareness",zh:"意识；认识",pos:"n.",ex:"raise awareness",id:485},
+  {en:"backup",zh:"备份；后援",pos:"n./v.",ex:"make a backup",id:486},
+  {en:"bankruptcy",zh:"破产",pos:"n.",ex:"declare bankruptcy",id:487},
+  {en:"bargain",zh:"便宜货；讨价还价",pos:"n./v.",ex:"a real bargain",id:488},
+  {en:"beam",zh:"梁；光束；微笑",pos:"n./v.",ex:"a beam of light",id:489},
+  {en:"betray",zh:"背叛；泄露",pos:"v.",ex:"betray a friend",id:490},
+  {en:"bilateral",zh:"双边的",pos:"adj.",ex:"bilateral agreement",id:491},
+  {en:"biography",zh:"传记",pos:"n.",ex:"write a biography",id:492},
+  {en:"bizarre",zh:"奇怪的",pos:"adj.",ex:"bizarre behavior",id:493},
+  {en:"blend",zh:"混合；融合",pos:"v./n.",ex:"blend in with the crowd",id:494},
+  {en:"boom",zh:"繁荣；激增",pos:"n./v.",ex:"economic boom",id:495},
+  {en:"bound",zh:"束缚；必定",pos:"adj./v.",ex:"be bound to succeed",id:496},
+  {en:"boycott",zh:"抵制",pos:"v./n.",ex:"boycott the product",id:497},
+  {en:"breach",zh:"违反；缺口",pos:"n./v.",ex:"breach of contract",id:498},
+  {en:"broaden",zh:"拓宽",pos:"v.",ex:"broaden one's horizons",id:499},
+  {en:"bubble",zh:"泡沫；气泡",pos:"n.",ex:"housing bubble",id:500}
+];
+
+// ═══════════════════ 词组数据 ═══════════════════
+const PHRASES = [
+  // 写作常用
+  {en:"on the contrary",zh:"相反地",cat:"写作",id:"p1"},
+  {en:"in contrast to",zh:"与…对比",cat:"写作",id:"p2"},
+  {en:"in terms of",zh:"就…而言",cat:"写作",id:"p3"},
+  {en:"in favor of",zh:"支持；有利于",cat:"写作",id:"p4"},
+  {en:"regardless of",zh:"不管；不顾",cat:"写作",id:"p5"},
+  {en:"due to / owing to",zh:"由于",cat:"写作",id:"p6"},
+  {en:"in addition to",zh:"除…之外",cat:"写作",id:"p7"},
+  {en:"with regard to",zh:"关于",cat:"写作",id:"p8"},
+  {en:"at the expense of",zh:"以…为代价",cat:"写作",id:"p9"},
+  {en:"on behalf of",zh:"代表",cat:"写作",id:"p10"},
+  {en:"in accordance with",zh:"根据；依照",cat:"写作",id:"p11"},
+  {en:"by means of",zh:"通过…方式",cat:"写作",id:"p12"},
+  {en:"for the sake of",zh:"为了…",cat:"写作",id:"p13"},
+  {en:"in response to",zh:"回应；响应",cat:"写作",id:"p14"},
+  {en:"as opposed to",zh:"与…相对",cat:"写作",id:"p15"},
+  {en:"on the grounds that",zh:"基于…理由",cat:"写作",id:"p16"},
+  {en:"in the long run",zh:"长远来看",cat:"写作",id:"p17"},
+  {en:"take ... into account",zh:"考虑到",cat:"写作",id:"p18"},
+  {en:"play a ... role in",zh:"在…中起…作用",cat:"写作",id:"p19"},
+  {en:"to some extent",zh:"在某种程度上",cat:"写作",id:"p20"},
+  {en:"to a large extent",zh:"很大程度上",cat:"写作",id:"p21"},
+  {en:"under no circumstances",zh:"决不",cat:"写作",id:"p22"},
+  {en:"by no means",zh:"决不",cat:"写作",id:"p23"},
+  {en:"it goes without saying",zh:"不言而喻",cat:"写作",id:"p24"},
+  {en:"be of significance",zh:"有重要意义",cat:"写作",id:"p25"},
+  {en:"put forward",zh:"提出",cat:"写作",id:"p26"},
+  {en:"break through",zh:"突破",cat:"写作",id:"p27"},
+  {en:"in the face of",zh:"面对",cat:"写作",id:"p28"},
+  {en:"give rise to",zh:"引起；导致",cat:"写作",id:"p29"},
+  {en:"shed light on",zh:"阐明；解释",cat:"写作",id:"p30"},
+  {en:"in light of",zh:"鉴于；考虑到",cat:"写作",id:"p31"},
+  {en:"at the core of",zh:"处于…的核心",cat:"写作",id:"p32"},
+  {en:"on the basis of",zh:"在…基础上",cat:"写作",id:"p33"},
+  {en:"in pursuit of",zh:"追求",cat:"写作",id:"p34"},
+  {en:"from my perspective",zh:"在我看来",cat:"写作",id:"p35"},
+  {en:"there is no denying that",zh:"不可否认",cat:"写作",id:"p36"},
+  {en:"it is universally acknowledged that",zh:"众所周知",cat:"写作",id:"p37"},
+  {en:"the pros and cons of",zh:"…的利弊",cat:"写作",id:"p38"},
+  {en:"attach great importance to",zh:"高度重视",cat:"写作",id:"p39"},
+  {en:"bridge the gap between",zh:"弥合…之间的差距",cat:"写作",id:"p40"},
+  // 逻辑连接
+  {en:"as a result",zh:"结果",cat:"逻辑",id:"p41"},
+  {en:"as a consequence",zh:"因此",cat:"逻辑",id:"p42"},
+  {en:"for instance / for example",zh:"例如",cat:"逻辑",id:"p43"},
+  {en:"in other words",zh:"换句话说",cat:"逻辑",id:"p44"},
+  {en:"that is to say",zh:"也就是说",cat:"逻辑",id:"p45"},
+  {en:"moreover / furthermore",zh:"此外",cat:"逻辑",id:"p46"},
+  {en:"in addition",zh:"另外",cat:"逻辑",id:"p47"},
+  {en:"what's more",zh:"更重要的是",cat:"逻辑",id:"p48"},
+  {en:"on the other hand",zh:"另一方面",cat:"逻辑",id:"p49"},
+  {en:"nevertheless / nonetheless",zh:"然而",cat:"逻辑",id:"p50"},
+  {en:"in conclusion",zh:"总而言之",cat:"逻辑",id:"p51"},
+  {en:"to sum up",zh:"总结",cat:"逻辑",id:"p52"},
+  {en:"in a nutshell",zh:"简而言之",cat:"逻辑",id:"p53"},
+  {en:"first and foremost",zh:"首先也是最重要的",cat:"逻辑",id:"p54"},
+  {en:"last but not least",zh:"最后但同样重要的",cat:"逻辑",id:"p55"},
+  {en:"not only... but also...",zh:"不仅…而且…",cat:"逻辑",id:"p56"},
+  {en:"either... or...",zh:"要么…要么…",cat:"逻辑",id:"p57"},
+  {en:"neither... nor...",zh:"既不…也不…",cat:"逻辑",id:"p58"},
+  {en:"on the one hand... on the other hand",zh:"一方面…另一方面",cat:"逻辑",id:"p59"},
+  // 动词短语
+  {en:"account for",zh:"解释；占…比例",cat:"动词",id:"p60"},
+  {en:"adapt to",zh:"适应",cat:"动词",id:"p61"},
+  {en:"apply to",zh:"适用于；申请",cat:"动词",id:"p62"},
+  {en:"benefit from",zh:"从…获益",cat:"动词",id:"p63"},
+  {en:"contribute to",zh:"贡献；促成",cat:"动词",id:"p64"},
+  {en:"depend on",zh:"取决于；依赖",cat:"动词",id:"p65"},
+  {en:"focus on",zh:"集中于",cat:"动词",id:"p66"},
+  {en:"lead to",zh:"导致",cat:"动词",id:"p67"},
+  {en:"result in",zh:"导致",cat:"动词",id:"p68"},
+  {en:"result from",zh:"起因于",cat:"动词",id:"p69"},
+  {en:"tend to",zh:"倾向于",cat:"动词",id:"p70"},
+  {en:"consist of",zh:"由…组成",cat:"动词",id:"p71"},
+  {en:"refer to",zh:"指的是；参考",cat:"动词",id:"p72"},
+  {en:"rely on",zh:"依赖",cat:"动词",id:"p73"},
+  {en:"suffer from",zh:"遭受",cat:"动词",id:"p74"},
+  {en:"belong to",zh:"属于",cat:"动词",id:"p75"},
+  {en:"deal with",zh:"处理；应对",cat:"动词",id:"p76"},
+  {en:"cope with",zh:"应对",cat:"动词",id:"p77"},
+  {en:"get rid of",zh:"摆脱",cat:"动词",id:"p78"},
+  {en:"take advantage of",zh:"利用",cat:"动词",id:"p79"},
+  {en:"make use of",zh:"利用",cat:"动词",id:"p80"},
+  {en:"take part in",zh:"参加",cat:"动词",id:"p81"},
+  {en:"participate in",zh:"参与",cat:"动词",id:"p82"},
+  {en:"come up with",zh:"想出",cat:"动词",id:"p83"},
+  {en:"keep up with",zh:"跟上；保持",cat:"动词",id:"p84"},
+  {en:"catch up with",zh:"赶上",cat:"动词",id:"p85"},
+  {en:"look forward to",zh:"期待",cat:"动词",id:"p86"},
+  {en:"look down on",zh:"看不起",cat:"动词",id:"p87"},
+  {en:"live up to",zh:"不辜负；达到(期望)",cat:"动词",id:"p88"},
+  {en:"make up for",zh:"弥补",cat:"动词",id:"p89"},
+  {en:"put up with",zh:"忍受",cat:"动词",id:"p90"},
+  {en:"stand out",zh:"脱颖而出",cat:"动词",id:"p91"},
+  {en:"turn out",zh:"结果是；证明是",cat:"动词",id:"p92"},
+  {en:"carry out",zh:"执行；实施",cat:"动词",id:"p93"},
+  {en:"figure out",zh:"弄清楚",cat:"动词",id:"p94"},
+  {en:"point out",zh:"指出",cat:"动词",id:"p95"},
+  {en:"set up",zh:"建立；设立",cat:"动词",id:"p96"},
+  {en:"take off",zh:"起飞；脱下；成功",cat:"动词",id:"p97"},
+  {en:"bring about",zh:"引起",cat:"动词",id:"p98"},
+  {en:"bring up",zh:"抚养；提出",cat:"动词",id:"p99"},
+  {en:"give up",zh:"放弃",cat:"动词",id:"p100"},
+  // 介词短语
+  {en:"in relation to",zh:"与…有关",cat:"介词",id:"p101"},
+  {en:"in connection with",zh:"与…有关",cat:"介词",id:"p102"},
+  {en:"with respect to",zh:"关于；就…而言",cat:"介词",id:"p103"},
+  {en:"in spite of / despite",zh:"尽管",cat:"介词",id:"p104"},
+  {en:"in case of",zh:"万一；如果发生",cat:"介词",id:"p105"},
+  {en:"in charge of",zh:"负责",cat:"介词",id:"p106"},
+  {en:"in search of",zh:"寻找",cat:"介词",id:"p107"},
+  {en:"in honor of",zh:"为纪念；为庆祝",cat:"介词",id:"p108"},
+  {en:"in memory of",zh:"纪念",cat:"介词",id:"p109"},
+  {en:"in need of",zh:"需要",cat:"介词",id:"p110"},
+  {en:"in place of",zh:"代替",cat:"介词",id:"p111"},
+  {en:"in exchange for",zh:"交换",cat:"介词",id:"p112"},
+  {en:"in comparison with",zh:"与…相比",cat:"介词",id:"p113"},
+  {en:"in line with",zh:"与…一致",cat:"介词",id:"p114"},
+  {en:"on account of",zh:"由于",cat:"介词",id:"p115"},
+  {en:"with the exception of",zh:"除…之外",cat:"介词",id:"p116"},
+  {en:"by virtue of",zh:"凭借；由于",cat:"介词",id:"p117"},
+  {en:"for lack of",zh:"因缺乏",cat:"介词",id:"p118"},
+  {en:"in proportion to",zh:"与…成比例",cat:"介词",id:"p119"},
+  {en:"a variety of",zh:"各种各样的",cat:"其他",id:"p120"},
+  {en:"a great deal of",zh:"大量的(不可数)",cat:"其他",id:"p121"},
+  {en:"a large number of",zh:"大量的(可数)",cat:"其他",id:"p122"},
+  {en:"the vast majority of",zh:"绝大多数",cat:"其他",id:"p123"},
+  {en:"as a whole",zh:"整体而言",cat:"其他",id:"p124"},
+  {en:"to a certain degree",zh:"在一定程度上",cat:"其他",id:"p125"},
+  {en:"in the course of",zh:"在…过程中",cat:"其他",id:"p126"},
+  {en:"from time to time",zh:"不时",cat:"其他",id:"p127"},
+  {en:"more often than not",zh:"往往；多半",cat:"其他",id:"p128"},
+  {en:"sooner or later",zh:"迟早",cat:"其他",id:"p129"},
+  {en:"for the time being",zh:"暂时",cat:"其他",id:"p130"},
+  {en:"once and for all",zh:"一劳永逸",cat:"其他",id:"p131"},
+  {en:"at all costs",zh:"不惜一切代价",cat:"其他",id:"p132"},
+  {en:"at stake",zh:"危如累卵",cat:"其他",id:"p133"},
+  {en:"out of date",zh:"过时的",cat:"其他",id:"p134"},
+  {en:"up to date",zh:"最新的",cat:"其他",id:"p135"},
+  {en:"on the rise",zh:"在上升",cat:"其他",id:"p136"},
+  {en:"around the corner",zh:"即将到来",cat:"其他",id:"p137"},
+  {en:"a case in point",zh:"恰当的例子",cat:"其他",id:"p138"},
+  {en:"all in all",zh:"总的来说",cat:"其他",id:"p139"},
+  {en:"step by step",zh:"逐步地",cat:"其他",id:"p140"},
+];
+
+// ═══════════════════ 状态管理 ═══════════════════
+const STORAGE_KEY = 'cet6_progress_v2';
+let progress = loadProgress();
+let cardIndex = 0, filteredWords = [...WORDS], quizState = null, currentNewsSource = 'bbc';
+
+function loadProgress() {
+  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : defaultProgress(); }
+  catch(e) { return defaultProgress(); }
+}
+function defaultProgress() { return { known: {}, phraseKnown: {}, quizTotal: 0, quizCorrect: 0, srs: {}, errors: {}, streak: { count: 0, lastDate: '' }, dailyDone: '' }; }
+function saveProgress() { localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); updateStats(); }
+function isKnown(id) { return !!progress.known[id]; }
+function isPhraseKnown(id) { return !!progress.phraseKnown[id]; }
+
+// SRS 间隔复习 ── 阶段: 0=新学 → 1=1天后 → 2=3天后 → 3=7天后 → 4=14天后 → 5=30天后 → 6=已掌握
+const SRS_INTERVALS = [0, 1, 3, 7, 14, 30];
+function getSRS(id) { return progress.srs[id] || { stage: 0, nextReview: 0 }; }
+function advanceSRS(id) {
+  const s = getSRS(id);
+  if (s.stage < 5) s.stage++;
+  const days = SRS_INTERVALS[s.stage];
+  s.nextReview = Date.now() + days * 86400000;
+  progress.srs[id] = s; saveProgress();
+}
+function resetSRS(id) { progress.srs[id] = { stage: 0, nextReview: 0 }; saveProgress(); }
+function getReviewDue() {
+  const now = Date.now();
+  return WORDS.filter(w => { const s = getSRS(w.id); return s.nextReview > 0 && s.nextReview <= now && s.stage < 6; });
+}
+function getWeakWords() {
+  return Object.entries(progress.errors || {})
+    .filter(([id, c]) => c >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .map(([id]) => WORDS.find(w => w.id === parseInt(id)))
+    .filter(Boolean);
+}
+
+// 签到
+function checkInToday() {
+  const today = new Date().toDateString();
+  if (progress.dailyDone === today) return;
+  const lastDate = progress.streak.lastDate ? new Date(progress.streak.lastDate) : null;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (lastDate && lastDate.toDateString() === yesterday) progress.streak.count++;
+  else if (!lastDate || lastDate.toDateString() !== today) progress.streak.count = 1;
+  progress.streak.lastDate = today;
+  progress.dailyDone = today;
+  saveProgress();
+}
+
+// ═══════════════════ UI导航 ═══════════════════
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(this.dataset.view).classList.add('active');
+    if (this.dataset.view === 'wordlist') renderWordList();
+    if (this.dataset.view === 'phrase') renderPhraseList();
+    if (this.dataset.view === 'news') renderNews();
+    if (this.dataset.view === 'quiz') resetQuiz();
+    if (this.dataset.view === 'practice') renderReading();
+  });
+});
+
+function updateStats() {
+  const kc = WORDS.filter(w => isKnown(w.id)).length;
+  const pc = PHRASES.filter(p => isPhraseKnown(p.id)).length;
+  const acc = progress.quizTotal > 0 ? Math.round((progress.quizCorrect / progress.quizTotal) * 100) : 0;
+  const due = getReviewDue().length;
+  const streak = progress.streak?.count || 0;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="num">${kc}/${WORDS.length}</div><div class="label">已掌握</div></div>
+    <div class="stat-card"><div class="num">${due}</div><div class="label">待复习</div></div>
+    <div class="stat-card"><div class="num">${acc}%</div><div class="label">正确率</div></div>
+    <div class="stat-card"><div class="num">🔥 ${streak}</div><div class="label">连续签到</div></div>
+  `;
+}
+
+// ═══════════════════ 抽认卡 ═══════════════════
+function showCard() {
+  if (!filteredWords.length) { document.getElementById('fcWord').textContent='暂无单词'; document.getElementById('fcPos').textContent=''; return; }
+  if (cardIndex >= filteredWords.length) cardIndex = 0;
+  const w = filteredWords[cardIndex];
+  document.getElementById('fcWord').textContent = w.en;
+  const s = getSRS(w.id);
+  const stageLabels = ['🆕 新学', '📅 1天后复习', '📅 3天后', '📅 7天后', '📅 14天后', '📅 30天后', '✅ 掌握'];
+  const stageText = isKnown(w.id) ? (s.stage >= 6 ? stageLabels[6] : stageLabels[s.stage] || stageLabels[0]) : '';
+  document.getElementById('fcPos').textContent = w.pos + (stageText ? ' · ' + stageText : '');
+  document.getElementById('fcMeaning').textContent = w.zh;
+  document.getElementById('fcExample').textContent = w.ex;
+  document.getElementById('card').classList.remove('flipped');
+}
+function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
+function nextCard() { cardIndex = (cardIndex + 1) % filteredWords.length; showCard(); }
+function prevCard() { cardIndex = (cardIndex - 1 + filteredWords.length) % filteredWords.length; showCard(); }
+function randomCard() { cardIndex = Math.floor(Math.random() * filteredWords.length); showCard(); }
+function toggleKnownCard() {
+  if (!filteredWords.length) return;
+  const w = filteredWords[cardIndex];
+  if (isKnown(w.id)) { progress.known[w.id] = false; resetSRS(w.id); }
+  else { progress.known[w.id] = true; advanceSRS(w.id); }
+  saveProgress();
+  const filter = document.getElementById('cardFilter').value;
+  if (filter !== 'all') { filteredWords = getFilteredWords(filter); cardIndex = 0; }
+  showCard();
+}
+function markCardUnknown() {
+  if (!filteredWords.length) return;
+  const w = filteredWords[cardIndex];
+  progress.known[w.id] = false; resetSRS(w.id); saveProgress();
+}
+function getFilteredWords(filter) {
+  if (filter === 'known') return WORDS.filter(w => isKnown(w.id));
+  if (filter === 'unknown') return WORDS.filter(w => !isKnown(w.id));
+  if (filter === 'review') return getReviewDue();
+  if (filter === 'weak') return getWeakWords();
+  return [...WORDS];
+}
+function resetCardIndex() { filteredWords = getFilteredWords(document.getElementById('cardFilter').value); cardIndex = 0; showCard(); }
+
+// ═══════════════════ 词汇表 ═══════════════════
+function renderWordList() {
+  const s = document.getElementById('wordSearch').value.toLowerCase();
+  const f = document.getElementById('wordFilter').value;
+  let words = f === 'known' ? WORDS.filter(w=>isKnown(w.id)) : f === 'unknown' ? WORDS.filter(w=>!isKnown(w.id)) : [...WORDS];
+  if (s) words = words.filter(w => w.en.toLowerCase().includes(s) || w.zh.includes(s));
+  document.getElementById('wordListBody').innerHTML = words.map((w,i) => `
+    <tr><td style="color:var(--c-dim)">${i+1}</td>
+    <td class="en">${w.en}</td><td class="zh">${w.zh}</td><td class="ex-td">${w.ex}</td>
+    <td><button class="status-btn ${isKnown(w.id)?'known':''}" onclick="progress.known[${w.id}]=!isKnown(${w.id});saveProgress();renderWordList();">${isKnown(w.id)?'✓ 已掌握':'未掌握'}</button></td></tr>
+  `).join('');
+}
+
+// ═══════════════════ 词组 ═══════════════════
+function renderPhraseList() {
+  const s = document.getElementById('phraseSearch').value.toLowerCase();
+  const f = document.getElementById('phraseFilter').value;
+  let phrases = f === 'all' ? [...PHRASES] : PHRASES.filter(p => p.cat === f);
+  if (s) phrases = phrases.filter(p => p.en.toLowerCase().includes(s) || p.zh.includes(s));
+  document.getElementById('phraseListBody').innerHTML = phrases.map((p,i) => `
+    <tr><td style="color:var(--c-dim)">${i+1}</td>
+    <td class="en">${p.en}</td><td class="zh">${p.zh}</td><td style="color:var(--c-muted);font-size:.8rem">${p.cat}</td>
+    <td><button class="status-btn ${isPhraseKnown(p.id)?'known':''}" onclick="progress.phraseKnown['${p.id}']=!isPhraseKnown('${p.id}');saveProgress();renderPhraseList();">${isPhraseKnown(p.id)?'✓ 已掌握':'未掌握'}</button></td></tr>
+  `).join('');
+}
+
+// ═══════════════════ 测验 ═══════════════════
+function resetQuiz() {
+  document.getElementById('quizSetup').style.display='block';
+  document.getElementById('quizPlay').style.display='none';
+  document.getElementById('quizEnd').style.display='none';
+  // 更新薄弱词按钮状态
+  const btn = document.getElementById('weakWordBtn');
+  if (btn) {
+    const weak = getWeakWords();
+    btn.textContent = weak.length >= 4 ? `🎯 薄弱词专练 (${weak.length})` : '🎯 薄弱词专练 (不足)';
+    btn.style.opacity = weak.length >= 4 ? '1' : '.5';
+  }
+}
+function startQuiz(count) { startGenericQuiz(WORDS, count, false); }
+function startPhraseQuiz(count) { startGenericQuiz(PHRASES, count, true); }
+
+function startDaily() {
+  const items = [...WORDS]; shuffle(items);
+  quizState = { items: items.slice(0, Math.min(20, items.length)), current: 0, score: 0, answered: false, isPhrase: false, isDaily: true };
+  document.getElementById('quizSetup').style.display='none';
+  document.getElementById('quizPlay').style.display='block';
+  document.getElementById('quizEnd').style.display='none';
+  showQuizQuestion();
+}
+
+function startWeakQuiz() {
+  const weak = getWeakWords();
+  if (weak.length < 4) {
+    alert('薄弱词不足（需要至少4个出错过2次以上的词），多做几轮测验再来吧！');
+    return;
+  }
+  const items = [...weak]; shuffle(items);
+  quizState = { items: items.slice(0, Math.min(20, items.length)), current: 0, score: 0, answered: false, isPhrase: false, isDaily: false };
+  document.getElementById('quizSetup').style.display='none';
+  document.getElementById('quizPlay').style.display='block';
+  document.getElementById('quizEnd').style.display='none';
+  showQuizQuestion();
+}
+
+function startGenericQuiz(pool, count, isPhrase) {
+  const items = [...pool]; shuffle(items);
+  quizState = { items: items.slice(0, Math.min(count, items.length)), current: 0, score: 0, answered: false, isPhrase };
+  document.getElementById('quizSetup').style.display='none';
+  document.getElementById('quizPlay').style.display='block';
+  document.getElementById('quizEnd').style.display='none';
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  if (quizState.current >= quizState.items.length) { endQuiz(); return; }
+  quizState.answered = false;
+  const q = quizState.items[quizState.current];
+  document.getElementById('quizNum').textContent = `${quizState.current + 1} / ${quizState.items.length}`;
+  document.getElementById('quizBar').style.width = ((quizState.current / quizState.items.length) * 100) + '%';
+  document.getElementById('quizScore').textContent = `正确: ${quizState.score}`;
+  document.getElementById('quizQuestion').textContent = q.zh;
+  const pool = quizState.isPhrase ? PHRASES : WORDS;
+  const others = pool.filter(x => x.id !== q.id); shuffle(others);
+  const options = [q, ...others.slice(0, 3)]; shuffle(options);
+  document.getElementById('quizOptions').innerHTML = options.map(opt => `<div class="quiz-option" onclick="selectQuizOption('${opt.id}','${q.id}',this)">${opt.en}</div>`).join('');
+}
+
+function selectQuizOption(selectedId, correctId, btn) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  progress.quizTotal++;
+  const pool = quizState.isPhrase ? PHRASES : WORDS;
+  const correctItem = pool.find(x => x.id === correctId);
+  document.querySelectorAll('#quizOptions .quiz-option').forEach(opt => {
+    if (opt.textContent.trim() === correctItem.en) opt.classList.add('correct');
+  });
+  if (selectedId === correctId) { quizState.score++; progress.quizCorrect++; }
+  else {
+    btn.classList.add('wrong');
+    // 记录错误次数
+    if (!quizState.isPhrase) {
+      const cid = typeof correctId === 'number' ? correctId : parseInt(correctId);
+      progress.errors[cid] = (progress.errors[cid] || 0) + 1;
+    }
+  }
+  if (quizState.isPhrase) progress.phraseKnown[correctId] = true;
+  else progress.known[parseInt(correctId)] = true;
+  saveProgress();
+  setTimeout(() => { quizState.current++; showQuizQuestion(); }, 800);
+}
+
+function endQuiz() {
+  document.getElementById('quizPlay').style.display='none';
+  const t = quizState.items.length, s = quizState.score, pct = Math.round((s/t)*100);
+  const msg = pct>=80?'优秀！':pct>=60?'不错，继续加油！':'多练练，你可以的！';
+  const isDaily = quizState.isDaily || false;
+  if (isDaily && pct >= 70) checkInToday();
+  document.getElementById('quizEnd').style.display='block';
+  document.getElementById('quizEnd').innerHTML = `<div class="quiz-result">
+    <div class="score">${s} / ${t}</div>
+    <p style="color:var(--c-muted);margin-top:8px">正确率 ${pct}%</p>
+    <p style="color:var(--c-accent);margin-top:12px;font-size:1.1rem">${isDaily && pct>=70 ? '🎉 签到成功！' : msg}</p>
+    <button class="btn btn-blue" style="margin-top:16px" onclick="resetQuiz()">再来一轮</button>
+    ${isDaily && pct<70 ? '<p style="color:var(--c-muted);margin-top:8px;font-size:.8rem">正确率需≥70%才能签到</p>' : ''}
+  </div>`;
+}
+
+// ═══════════════════ 外刊阅读 ═══════════════════
+function escapeHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+const NEWS = [
+  // ═══ 科技与AI (3篇) ═══
+  { cat:"科技与AI", source:"The Economist", date:"2026-07", title:"How Artificial Intelligence Is Reshaping the Global Job Market", desc:`The rapid advancement of artificial intelligence is fundamentally transforming the global labor market at an unprecedented pace. According to a comprehensive report released by the McKinsey Global Institute, up to 375 million workers worldwide—approximately 14% of the global workforce—may need to switch occupational categories by 2030 due to automation and AI-driven disruption.
+
+The report identifies several sectors most vulnerable to transformation. Manufacturing, retail, and administrative support roles face the highest risk of automation, with routine cognitive and manual tasks increasingly performed by intelligent systems. However, the report also emphasizes that AI will create new categories of jobs that do not yet exist, much as the internet revolution spawned entirely new industries.
+
+A particularly striking finding is that high-skilled professions once considered immune to automation—including law, medicine, and financial analysis—are now experiencing significant AI-driven change. Legal document review, medical image analysis, and algorithmic trading are increasingly performed by AI systems with accuracy rates that match or exceed human professionals.
+
+The transition, according to the report, will require massive investment in education and retraining programs. The World Economic Forum estimates that 54% of all employees will require significant reskilling by 2028. Countries with robust social safety nets and flexible education systems are expected to navigate this transition more successfully than those with rigid labor markets and underfunded training programs.
+
+The geographic impact of AI-driven job displacement is expected to be highly uneven. Developed economies, where service-sector and knowledge-work jobs predominate, may face more immediate disruption than developing nations still reliant on agriculture and manufacturing. However, developing countries may ultimately face greater challenges due to limited resources for workforce retraining.
+
+Despite the alarming headline numbers, many economists remain cautiously optimistic. Historical precedents suggest that technological revolutions, while disruptive in the short term, ultimately create more jobs than they eliminate. The key variable, experts agree, is whether societies can manage the transition equitably and ensure that the benefits of AI-driven productivity gains are broadly shared rather than concentrated among a small elite.`, keywords:["artificial intelligence","automation","workforce","disruption","manufacturing","cognitive","algorithm","transition","retraining","productivity"] },
+  { cat:"科技与AI", source:"WIRED", date:"2026-06", title:"The Ethics of Autonomous Weapons: A Growing International Concern", desc:`The development of lethal autonomous weapons systems—often called "killer robots"—has emerged as one of the most contentious issues in international security and technology ethics. Unlike drones, which are remotely operated by human pilots, autonomous weapons would be capable of selecting and engaging targets without direct human intervention.
+
+A coalition of over 120 non-governmental organizations, operating under the "Campaign to Stop Killer Robots," has been pressing for a preemptive international ban on fully autonomous weapons. The campaign argues that delegating life-and-death decisions to machines crosses a fundamental moral threshold and could lead to an arms race that destabilizes global security.
+
+The United Nations has held multiple rounds of discussions on the issue through the Convention on Certain Conventional Weapons. While a majority of participating nations support some form of regulation, a small group of militarily advanced countries—including the United States, Russia, and Israel—have resisted calls for a binding treaty, arguing that autonomous systems could reduce civilian casualties through greater precision and eliminate human errors caused by fatigue or emotional stress.
+
+Proponents of autonomous weapons point to potential humanitarian benefits. An AI-guided missile, they argue, could identify and avoid civilian infrastructure with greater accuracy than a human operator under combat stress. Autonomous systems could also be deployed in environments too dangerous or inaccessible for human soldiers, such as deep-sea mine clearance or nuclear disaster response.
+
+Critics counter that current AI technology remains fundamentally unreliable in complex, unpredictable combat environments. Machine learning systems can be fooled by adversarial examples—subtle alterations to input data that cause AI to misclassify what it perceives. In a battlefield context, such errors could have catastrophic consequences.
+
+The debate also raises profound questions about accountability under international humanitarian law. If an autonomous weapon commits a war crime, who bears responsibility—the programmer, the commanding officer, the manufacturer, or the machine itself? Current legal frameworks provide no clear answer.`, keywords:["autonomous","weapons","ethics","coalition","regulation","precision","civilian","humanitarian","accountability","framework"] },
+  { cat:"科技与AI", source:"Nature", date:"2026-05", title:"Breakthrough in Nuclear Fusion Brings Clean Energy Closer to Reality", desc:`Scientists at the Joint European Torus facility in Oxfordshire have achieved a landmark milestone in the pursuit of practical nuclear fusion energy, sustaining a plasma reaction at 150 million degrees Celsius for a record-breaking eight minutes. The achievement represents a significant step toward the long-held dream of harnessing the same energy source that powers the sun.
+
+Nuclear fusion, which involves fusing hydrogen atoms to form helium under extreme temperatures and pressure, promises virtually limitless clean energy with no greenhouse gas emissions and minimal radioactive waste. Unlike nuclear fission, which splits atoms and produces long-lived radioactive byproducts, fusion's primary waste product is helium—an inert, non-toxic gas.
+
+The challenge has always been achieving "net energy gain"—producing more energy from the fusion reaction than is consumed in creating and sustaining it. In December 2022, the National Ignition Facility in California achieved the first-ever controlled fusion reaction with net energy gain, albeit at a tiny scale. The latest European experiment demonstrates sustained plasma confinement at a scale relevant to commercial power generation.
+
+The international ITER project, under construction in southern France, represents the next major milestone. Backed by 35 nations including China, the European Union, India, Japan, Russia, South Korea, and the United States, ITER aims to demonstrate sustained fusion at industrial scale by 2035. If successful, it could pave the way for the first fusion power plants by mid-century.
+
+Significant engineering challenges remain. The reactor materials must withstand neutron bombardment that would render most conventional materials brittle and radioactive within months. Developing "low-activation" materials capable of surviving in such extreme environments is an active area of research.
+
+Private sector interest has surged in recent years. More than 30 fusion startups have collectively raised over $5 billion in investment, pursuing alternative approaches including smaller, more modular reactor designs. Some analysts believe the private sector could accelerate the timeline, with several companies targeting demonstration reactors by the early 2030s.`, keywords:["fusion","plasma","sustainable","emission","radioactive","confinement","reactor","investment","modular","demonstrate"] },
+
+  // ═══ 环境与气候 (3篇) ═══
+  { cat:"环境与气候", source:"National Geographic", date:"2026-07", title:"The Amazon Rainforest Approaching an Irreversible Tipping Point", desc:`New research published in the journal Science Advances warns that the Amazon rainforest is approaching a critical tipping point beyond which large portions of the ecosystem could irreversibly transform into savanna. The study, conducted by an international team of ecologists and climate scientists, analyzed satellite data spanning four decades to assess the rainforest's resilience to drought, deforestation, and rising temperatures.
+
+The findings are alarming. Approximately 75% of the Amazon has shown declining resilience since the early 2000s, meaning the forest takes longer to recover from disturbances such as droughts and fires. Regions closest to human activity—near roads, agricultural areas, and settlements—show the most pronounced loss of resilience.
+
+The Amazon plays a crucial role in regulating the global climate by absorbing approximately 2 billion tons of carbon dioxide annually—roughly 5% of global emissions. Its transformation from carbon sink to carbon source would dramatically accelerate climate change. Moreover, the forest generates much of its own rainfall through evapotranspiration; as tree cover decreases, the regional water cycle weakens, creating a self-reinforcing cycle of drying and degradation.
+
+Deforestation remains the primary immediate threat. Despite commitments by the Brazilian government, annual deforestation rates have remained stubbornly high, driven by cattle ranching, soy cultivation, and illegal logging. A recent investigation revealed that approximately 20% of Brazil's beef exports to the European Union may be linked to illegally deforested land.
+
+Indigenous communities, who have historically served as the most effective guardians of the forest, are increasingly under threat from land grabbers and illegal miners. Studies consistently show that deforestation rates on indigenous-managed lands are significantly lower than in other areas.
+
+The window for action is narrowing. The scientists estimate that preventing the tipping point requires reducing deforestation to near zero and restoring at least 15% of degraded areas within the next decade. Achieving these goals, they argue, demands unprecedented international cooperation and financial support for forest nations.`, keywords:["rainforest","ecosystem","resilience","deforestation","drought","emission","evapotranspiration","degradation","indigenous","cooperation"] },
+  { cat:"环境与气候", source:"BBC Future", date:"2026-06", title:"The Rise of Vertical Farming: Can Indoor Agriculture Feed the World?", desc:`In a nondescript warehouse on the outskirts of Copenhagen, rows of leafy greens stretch toward the ceiling under the purple glow of LED lights. No soil, no sunlight, and 95% less water than conventional farming—this is vertical farming, and its proponents believe it could revolutionize global food production.
+
+The global vertical farming market has grown from $3.1 billion in 2020 to an estimated $15.7 billion in 2026, driven by advances in LED efficiency, automation, and hydroponic technology. Major investments from companies like Google Ventures and SoftBank have accelerated commercial deployment.
+
+The environmental advantages are substantial. Vertical farms use a fraction of the land and water required by conventional agriculture and eliminate the need for chemical pesticides. Because production can be located in urban centers, transportation emissions are dramatically reduced. A head of lettuce grown in a vertical farm and delivered to a nearby supermarket may travel 50 kilometers rather than the 2,000 kilometers typical of conventional supply chains.
+
+Critics, however, point to significant limitations. The high energy requirements of indoor farming—primarily for lighting and climate control—mean that its carbon footprint depends heavily on the energy source. A vertical farm powered by renewable energy can be genuinely sustainable, but one reliant on fossil fuel electricity may have a worse environmental profile than conventional farming.
+
+Current technology also limits the variety of crops that can be grown profitably indoors. Leafy greens and herbs dominate the industry because they grow quickly and have high value per kilogram. Staple crops like wheat, rice, and corn—which together provide the majority of human calories—remain economically unviable for vertical farming due to their low market value relative to the energy inputs required.
+
+The social dimension is equally complex. Vertical farming advocates emphasize the potential to create high-tech agricultural jobs in urban areas and reduce food deserts in underserved communities. Skeptics worry that the capital-intensive nature of the industry could further concentrate food production in the hands of a few large corporations.
+
+The most promising model may be hybrid systems that combine the efficiency of vertical farming for high-value crops with conventional agriculture for staples, creating a more resilient and diversified global food system.`, keywords:["vertical","agriculture","hydroponic","pesticide","transportation","renewable","sustainable","staple","capital-intensive","diversified"] },
+  { cat:"环境与气候", source:"The Atlantic", date:"2026-05", title:"The Global Water Crisis: Scarcity in an Age of Abundance", desc:`Water covers 71% of the Earth's surface, yet over 2 billion people lack access to safely managed drinking water. This paradox—scarcity amidst abundance—is one of the defining challenges of the 21st century, and it is projected to intensify dramatically in the coming decades.
+
+The World Resources Institute's latest Aqueduct report projects that by 2030, global freshwater demand will exceed sustainable supply by 56%. Fourteen of the world's 20 megacities already experience water scarcity, and the number is expected to rise as urbanization accelerates across Asia and Africa.
+
+Climate change is the primary accelerant. Rising temperatures increase evaporation rates and alter precipitation patterns, turning historically fertile regions into drought-prone zones. The Western United States is experiencing its most severe megadrought in 1,200 years, while Cape Town narrowly avoided "Day Zero"—when municipal water supplies would be shut off—in 2018 through extraordinary conservation measures.
+
+Agriculture accounts for approximately 70% of global freshwater withdrawals, making it both the primary cause of water stress and the sector with the greatest potential for efficiency gains. Precision irrigation technologies, drought-resistant crop varieties, and shifts toward less water-intensive crops could dramatically reduce agricultural water demand.
+
+Industrial and domestic use presents different challenges. Aging infrastructure in many developed countries results in staggering water losses—London loses approximately 25% of its treated water to leaks. In developing countries, the challenge is often a lack of infrastructure altogether, with millions relying on unsafe water sources.
+
+The solutions exist, but they require political will and investment. Singapore's NEWater system, which recycles treated wastewater into high-grade reclaimed water, demonstrates that technology can transform water management. Israel's nationwide system of desalination plants and drip irrigation has turned a water-scarce nation into a water surplus country.
+
+Water is fundamentally unlike other resources: it has no substitute. As climate change accelerates and populations grow, the ability to manage water sustainably may become the single most important determinant of national prosperity and stability.`, keywords:["scarcity","freshwater","sustainable","urbanization","precipitation","drought","irrigation","infrastructure","desalination","prosperity"] },
+
+  // ═══ 经济与商业 (3篇) ═══
+  { cat:"经济与商业", source:"Financial Times", date:"2026-07", title:"Cryptocurrency Regulation Enters a New Era of Global Coordination", desc:`After years of fragmented and often contradictory approaches to cryptocurrency regulation, a new era of global coordination is emerging. The Financial Stability Board, an international body that monitors the global financial system, has published a comprehensive framework for regulating digital assets that has been endorsed by all G20 member nations.
+
+The framework addresses the key challenges that have plagued cryptocurrency markets: consumer protection, market integrity, financial stability, and the prevention of illicit finance. For the first time, major economies have agreed on common standards for capital requirements, custody arrangements, and disclosure obligations for cryptocurrency exchanges and other service providers.
+
+The catalyst for this unprecedented coordination was the series of high-profile cryptocurrency collapses and fraud cases that occurred between 2022 and 2025, including the bankruptcy of several major exchanges and the collapse of prominent stablecoins. These events erased hundreds of billions of dollars in market value and affected millions of retail investors worldwide.
+
+Stablecoins—cryptocurrencies designed to maintain a stable value relative to a fiat currency—receive particular regulatory scrutiny under the new framework. Issuers will be required to hold high-quality liquid assets equivalent to 100% of outstanding tokens and submit to regular audits. This addresses the central vulnerability exposed by previous stablecoin collapses: the mismatch between the promise of stability and the often-risky assets backing them.
+
+The framework takes a notably different approach to central bank digital currencies, or CBDCs, which are being developed by over 100 countries. CBDCs are treated as sovereign instruments and therefore subject to a separate regulatory track, though the framework encourages interoperability standards.
+
+Industry reaction has been mixed. Established cryptocurrency firms with strong compliance programs have generally welcomed the clarity, arguing that regulatory certainty will attract institutional investment and mainstream adoption. Smaller, less regulated entities warn that the compliance costs could drive innovation offshore.
+
+The implementation timeline extends through 2028, with a review mechanism established to assess the framework's effectiveness and make adjustments as the technology evolves. Whether this marks the beginning of a stable, mature cryptocurrency market or merely a temporary truce in the ongoing struggle between innovation and regulation remains to be seen.`, keywords:["regulation","framework","coordination","integrity","stablecoin","compliance","sovereign","institutional","assessment","mechanism"] },
+  { cat:"经济与商业", source:"Harvard Business Review", date:"2026-06", title:"The Four-Day Work Week: From Experiment to Mainstream Movement", desc:`The largest-ever global trial of the four-day work week has concluded, delivering results that may accelerate the transformation of workplace norms across industries and continents. The coordinated experiment, involving over 200 companies and 10,000 workers across 15 countries, found that 92% of participating companies plan to continue with the reduced schedule.
+
+The results challenge deeply ingrained assumptions about productivity and working hours. Despite working 20% fewer hours, participating companies reported that revenue remained stable or increased over the trial period. Employee well-being metrics showed dramatic improvements: stress levels decreased by 39%, burnout reduced by 71%, and work-life satisfaction scores rose significantly.
+
+The mechanism behind these results is revealing. Companies that successfully adopted the four-day week did not simply compress five days of work into four. Instead, they implemented deliberate efficiency improvements: reducing meeting lengths, streamlining communication protocols, eliminating non-essential tasks, and empowering employees to redesign their workflows.
+
+Sector-specific differences have emerged. Knowledge-based industries—technology, professional services, and creative agencies—reported the smoothest transitions, while client-facing businesses requiring fixed operating hours found implementation more challenging. Manufacturing firms with continuous production processes required the most creative solutions, often adopting staggered schedules rather than universal four-day weeks.
+
+Critics raise important concerns. Some economists worry that the four-day week may primarily benefit high-skilled knowledge workers while leaving behind those in service and manual occupations where hours are more directly tied to output. There are also legitimate questions about whether the productivity gains observed during enthusiastic early adoption can be sustained over the long term.
+
+The movement has gained particular momentum in Europe, where several governments are considering legislative support. Spain has launched a government-funded pilot program, while Belgium has become the first EU country to legally guarantee workers the right to a four-day week at full pay. In the United States, adoption has been driven primarily by private-sector initiatives rather than policy interventions.
+
+The four-day work week represents more than a scheduling innovation; it embodies a fundamental reexamination of the relationship between time, productivity, and well-being in modern economies.`, keywords:["productivity","revenue","well-being","efficiency","implementation","client","legislative","innovation","guarantee","fundamental"] },
+  { cat:"经济与商业", source:"The Economist", date:"2026-05", title:"Supply Chain Resilience: The New Priority in Global Trade", desc:`The era of hyper-efficient, just-in-time global supply chains is giving way to a new paradigm centered on resilience and redundancy. Three years of pandemic disruptions, geopolitical tensions, and climate-related shocks have fundamentally altered how companies and governments think about the global trade networks that underpin the modern economy.
+
+A survey by McKinsey found that supply chain disruptions now cost the average company approximately 45% of one year's profits over a decade—a figure that has doubled since 2020. The financial impact has transformed supply chain management from a back-office operational concern into a board-level strategic priority.
+
+The most visible manifestation of this shift is the trend toward "nearshoring" and "friendshoring"—relocating production closer to end consumers or to politically aligned countries. Mexico has emerged as a primary beneficiary, with foreign direct investment reaching record levels as companies establish manufacturing capacity to serve the North American market. Southeast Asian nations, particularly Vietnam and Indonesia, have seen similar investment surges.
+
+Diversification of supplier bases has become another key strategy. The concentration of critical component manufacturing in single countries or even single factories—a practice that optimized costs in stable times—proved catastrophic when those nodes were disrupted. Companies are now building redundancy into their supply networks, even at the expense of some cost efficiency.
+
+Technology is playing a crucial role in this transformation. Artificial intelligence and machine learning systems are being deployed to monitor supply chain risks in real time, from weather events to political instability to supplier financial health. Blockchain-based systems are enhancing traceability, allowing companies to verify the provenance and conditions of production throughout complex multi-tier supply chains.
+
+The environmental dimension adds another layer of complexity. As companies face increasing pressure to reduce their carbon footprints, supply chains—which account for the majority of most companies' emissions—are becoming a focal point for sustainability efforts. This is driving demand for local sourcing, electrified logistics, and circular economy models that minimize waste.
+
+The transition toward resilience comes with significant costs. The consulting firm BCG estimates that building resilient supply chains will require global investment of $2-4 trillion over the next decade. The fundamental question facing business leaders is whether these investments represent a temporary insurance premium against a turbulent period—or a permanent structural shift in how global trade operates.`, keywords:["resilience","redundancy","disruption","geopolitical","nearshoring","diversification","catastrophic","traceability","sustainability","structural"] },
+
+  // ═══ 社会与文化 (3篇) ═══
+  { cat:"社会与文化", source:"The New Yorker", date:"2026-07", title:"The Loneliness Epidemic: Understanding a Modern Crisis of Connection", desc:`In 2023, the U.S. Surgeon General issued an advisory describing loneliness and social isolation as a public health crisis, comparing its mortality impact to smoking 15 cigarettes a day. The report ignited a global conversation about what many had silently experienced: in an age of unprecedented digital connectivity, genuine human connection has become increasingly elusive.
+
+The statistics are sobering. A meta-analysis of 90 studies covering over 2 million participants found that social isolation increases the risk of premature death by 29%, a figure that rivals well-established risk factors like obesity and physical inactivity. Loneliness has been linked to elevated rates of cardiovascular disease, dementia, depression, and anxiety.
+
+The causes are multifaceted. The decline of traditional community institutions—churches, unions, neighborhood associations—has eroded the "third places" between work and home where people historically formed social bonds. Urban design that prioritizes automobiles over pedestrians has reduced the casual, unplanned interactions that build community cohesion. Economic precarity and the gig economy have weakened workplace relationships that once provided a sense of belonging.
+
+Social media occupies an ambiguous position in this landscape. Research consistently shows that the quality of online interactions matters more than their quantity. Active, engaged use—direct messaging, commenting on friends' posts, participating in interest-based communities—can strengthen real-world relationships. Passive consumption—endless scrolling through curated highlight reels—tends to increase feelings of inadequacy and isolation.
+
+Different demographic groups experience loneliness differently. Contrary to popular perception, young adults report higher rates of loneliness than the elderly in many studies. The transition to adulthood—leaving family, establishing new social networks, navigating romantic relationships—appears to be a period of particular vulnerability.
+
+Governments have begun to respond. The United Kingdom appointed a Minister for Loneliness in 2018, and Japan followed with a Minister of Loneliness and Isolation in 2021. These initiatives fund community programs, support research, and coordinate across government departments to address the social determinants of connection.
+
+Experts emphasize that addressing the loneliness crisis requires more than individual solutions. While personal strategies—cultivating existing relationships, joining groups, volunteering—are valuable, they argue that meaningful progress requires changes to the built environment, workplace culture, and digital platform design that shape our daily opportunities for connection.`, keywords:["epidemic","isolation","mortality","premature","cardiovascular","dementia","depression","cohesion","demographic","vulnerability"] },
+  { cat:"社会与文化", source:"The Guardian", date:"2026-06", title:"The Rise of Digital Nomadism and the Transformation of Work-Life Boundaries", desc:`The COVID-19 pandemic inadvertently launched the world's largest-ever experiment in remote work, and one of its most visible legacies is the explosive growth of digital nomadism. An estimated 35 million people worldwide now identify as digital nomads—professionals who leverage technology to work remotely while traveling or living in locations of their choosing.
+
+This phenomenon has profound implications for host communities. Cities like Lisbon, Bali, Mexico City, and Chiang Mai have experienced surges in digital nomad populations, attracted by lower costs of living, pleasant climates, and robust internet infrastructure. While this influx brings economic benefits—digital nomads spend an estimated $787 billion annually—it also raises concerns about gentrification, housing affordability, and cultural displacement.
+
+Several countries have responded by creating dedicated "digital nomad visas" designed to attract remote workers. More than 60 nations now offer such programs, typically requiring proof of employment with a foreign company, minimum income thresholds, and health insurance. These visas represent a novel category in immigration policy, occupying a space between tourist visas and traditional work permits.
+
+The digital nomad lifestyle is not without its psychological costs. Research published in the Journal of Occupational Health Psychology found that digital nomads report higher rates of loneliness and professional isolation than traditional remote workers, who typically maintain stronger connections to a home community. The constant novelty of travel can paradoxically lead to emotional exhaustion and a diminished sense of belonging.
+
+Corporate attitudes toward digital nomadism span a wide spectrum. Some companies, particularly in the technology sector, have embraced fully distributed workforces. Others maintain strict requirements about employee location, often citing tax compliance, data security regulations, and concerns about team cohesion. A growing middle ground involves "work from anywhere" policies with defined limitations on duration and location.
+
+The infrastructure supporting digital nomadism has matured rapidly. Co-working spaces, many operated by global brands like WeWork, have expanded aggressively in digital nomad hubs. Specialized insurance products, banking services for multi-currency lifestyles, and online communities that facilitate social connections have proliferated.
+
+The larger significance of digital nomadism extends beyond the individuals practicing it. It represents a fundamental challenge to the geographic constraints that have historically bound workers to specific cities and countries—a challenge that may reshape patterns of global migration, urban development, and national identity in the decades ahead.`, keywords:["phenomenon","infrastructure","immigration","threshold","psychological","compliance","duration","migration","constraints","identity"] },
+  { cat:"社会与文化", source:"TIME", date:"2026-05", title:"The Attention Economy: How Tech Companies Monetize Human Focus", desc:`The average person now encounters approximately 10,000 advertisements per day, up from roughly 500 in the 1970s. This staggering increase is not an accident—it is the deliberate outcome of an economic system built around the commodification of human attention, and it is reshaping our cognitive landscape in ways we are only beginning to understand.
+
+The attention economy operates on a simple premise: in a world of information abundance, human attention is the scarce resource. Technology platforms compete fiercely for every second of user engagement because their business models depend on it. The more time users spend scrolling, watching, and clicking, the more data can be collected and the more advertisements can be served.
+
+The neurobiological mechanisms that make this system so profitable are well understood by the companies that exploit them. Intermittent variable rewards—the same psychological principle that makes slot machines addictive—are embedded in the design of social media feeds, notification systems, and autoplay features. Each scroll or refresh offers the possibility of a rewarding piece of content, and this unpredictability is precisely what keeps users engaged.
+
+The consequences for cognitive function are increasingly documented. A landmark study published in Nature Communications found that heavy social media users demonstrated significantly reduced attention spans and impaired ability to concentrate on demanding tasks compared to light users. The constant context-switching required by notification-driven interaction appears to degrade the brain's capacity for sustained focus.
+
+Children and adolescents represent a population of particular concern. The adolescent brain, with its heightened sensitivity to social rewards and still-developing prefrontal cortex responsible for impulse control, is uniquely vulnerable to the attention economy's manipulative design features. Rates of anxiety, depression, and self-harm among teenagers have risen sharply in parallel with smartphone adoption, though the causal relationship remains contested among researchers.
+
+Regulatory responses have been slow but are accelerating. The European Union's Digital Services Act requires platforms to assess and mitigate systemic risks, including those related to mental health. Several U.S. states have passed legislation restricting social media use by minors. However, critics argue that these measures address symptoms rather than the underlying business model that incentivizes addiction.
+
+The emerging field of "humane technology" seeks to develop alternative models—products designed to serve user well-being rather than maximize engagement. Whether these alternatives can compete in a marketplace dominated by attention-optimized incumbents remains an open question, but growing public awareness of the attention economy's costs may create the demand necessary to sustain them.`, keywords:["commodification","abundance","engagement","mechanism","intermittent","cognitive","adolescent","impulse","legislation","incentive"] },
+
+  // ═══ 健康与医学 (2篇) ═══
+  { cat:"健康与医学", source:"Scientific American", date:"2026-06", title:"The Microbiome Revolution: How Gut Bacteria Shape Human Health", desc:`Over the past decade, our understanding of the human body has undergone a quiet revolution. The discovery that the trillions of microorganisms living in and on our bodies—collectively known as the human microbiome—play crucial roles in everything from digestion to mental health has opened entirely new frontiers in medicine.
+
+The human gut alone contains approximately 1,000 species of bacteria, weighing roughly two kilograms in total. These microorganisms are not passive passengers; they actively interact with their human host through complex biochemical signaling pathways. They produce neurotransmitters that influence mood, regulate immune system function, extract nutrients from food that human enzymes cannot process, and even affect the expression of human genes.
+
+The implications for disease are profound. Dysbiosis—an imbalance in the microbial community—has been implicated in conditions ranging from inflammatory bowel disease and obesity to depression and Parkinson's disease. A growing body of evidence suggests that the composition of an individual's gut microbiome may influence their response to cancer immunotherapy, potentially explaining why some patients experience dramatic recoveries while others derive no benefit from the same treatment.
+
+Diet is the most powerful tool for modulating the microbiome. High-fiber diets rich in diverse plant foods promote microbial diversity, which is strongly associated with good health outcomes. In contrast, diets high in processed foods and low in fiber have been shown to reduce microbial diversity within days. The Western diet, characterized by its high content of refined sugars and saturated fats, is increasingly implicated in the epidemic of chronic inflammatory diseases.
+
+The commercial microbiome industry has exploded, with probiotics, prebiotics, and microbiome testing kits now generating billions in revenue. However, the science remains far ahead of the regulation. Many probiotic products make claims unsupported by rigorous clinical evidence, and the FDA has issued warning letters to several companies for unsubstantiated marketing.
+
+Fecal microbiota transplantation—the transfer of gut bacteria from a healthy donor to a patient—represents one of the most dramatic therapeutic applications. Originally developed to treat recurrent Clostridium difficile infections, where it achieves cure rates exceeding 90%, the technique is now being investigated for a wide range of conditions. However, standardized regulation and long-term safety data remain works in progress.
+
+The microbiome represents a paradigm shift in how we understand human biology—from seeing the body as a singular entity to recognizing it as a complex ecosystem whose health depends on the diversity and balance of its microbial inhabitants.`, keywords:["microbiome","microorganism","bacteria","biochemical","immune","inflammation","obesity","microbial","therapeutic","paradigm"] },
+  { cat:"健康与医学", source:"The Lancet", date:"2026-05", title:"Sleep Deprivation: The Hidden Public Health Crisis", desc:`Sleep deprivation has become so pervasive in modern society that its seriousness as a public health issue is frequently underestimated. The Centers for Disease Control and Prevention has declared insufficient sleep a public health epidemic, with approximately one-third of American adults regularly failing to obtain the recommended seven to nine hours of sleep per night.
+
+The health consequences of chronic sleep deprivation extend far beyond the familiar experience of daytime fatigue. Epidemiological studies have consistently linked insufficient sleep to increased risk of cardiovascular disease, type 2 diabetes, obesity, and impaired immune function. A meta-analysis published in the journal Sleep found that individuals who consistently sleep less than six hours per night have a 12% higher risk of all-cause mortality compared to those sleeping seven to eight hours.
+
+The cognitive effects are equally severe. Sleep plays an essential role in memory consolidation—the process by which the brain stabilizes and integrates new information acquired during wakefulness. Research conducted at the University of California, Berkeley, demonstrated that sleep-deprived individuals show a 40% reduction in their ability to form new memories. Furthermore, the glymphatic system, which clears metabolic waste products from the brain, is primarily active during deep sleep. The accumulation of these waste products, including beta-amyloid plaques associated with Alzheimer's disease, may explain the link between chronic sleep deprivation and increased dementia risk.
+
+The economic toll is staggering. A RAND Corporation study estimated that insufficient sleep costs the U.S. economy approximately $411 billion annually—or 2.28% of GDP—in lost productivity. Japan, the United Kingdom, and Germany each lose between 1.4% and 2.9% of GDP for the same reason.
+
+The causes of widespread sleep deprivation are deeply embedded in the structure of modern life. Shift work, which disrupts the circadian rhythm, affects approximately 20% of the global workforce. The proliferation of screens emitting blue-spectrum light suppresses melatonin production, delaying sleep onset. Cultural attitudes that valorize sleep deprivation as a sign of dedication and productivity remain stubbornly persistent.
+
+Solutions exist but require both individual and systemic action. On a personal level, sleep hygiene practices—maintaining consistent sleep schedules, limiting evening screen time, avoiding caffeine after midday—are demonstrably effective. Systemically, later school start times for adolescents, workplace policies that discourage after-hours communication, and public health campaigns comparable to those for smoking cessation could yield substantial population-level benefits.`, keywords:["deprivation","epidemic","chronic","cardiovascular","diabetes","mortality","cognitive","consolidation","metabolic","circadian"] },
+
+  // ═══ 教育 (2篇) ═══
+  { cat:"教育", source:"The Chronicle of Higher Education", date:"2026-07", title:"The Crisis of the Humanities: Declining Enrollment and the Search for Relevance", desc:`Across universities in the United States and Europe, humanities disciplines are experiencing an enrollment crisis of historic proportions. The number of students majoring in English, history, philosophy, and foreign languages has declined by 30 to 50 percent over the past decade at many institutions, prompting department closures, faculty layoffs, and existential debates about the future of liberal education.
+
+The proximate causes are not difficult to identify. Rising tuition costs and increasing student debt have intensified pressure on students and families to choose majors with clear vocational pathways. State governments have increasingly tied higher education funding to metrics emphasizing STEM graduates and workforce outcomes. The narrative—whether accurate or not—that humanities degrees lead to poor employment prospects has become deeply embedded in public discourse.
+
+Yet the data suggests a more complex picture than the prevailing narrative acknowledges. Longitudinal studies tracking career outcomes find that humanities graduates ultimately achieve employment rates and salaries comparable to their peers in many professional fields, though the trajectory is often slower. Employers consistently rank skills cultivated by humanities education—critical thinking, analytical writing, persuasive communication, cultural competency—among the most valued attributes in the contemporary workplace.
+
+The crisis has prompted a wide range of institutional responses. Some universities have integrated humanities more deliberately with professional programs, creating joint degrees that combine philosophy with computer science or history with public policy. Others have reoriented humanities curricula toward contemporary issues—climate change, artificial intelligence, global migration—to demonstrate the disciplines' relevance to urgent societal challenges.
+
+The digital humanities represent an area of particular growth and innovation. Scholars are applying computational methods to literary and historical analysis, digitizing archives to make cultural heritage accessible to global audiences, and creating new forms of scholarly communication that transcend the traditional monograph. These approaches have attracted students who might otherwise gravitate exclusively toward STEM fields.
+
+The debate extends beyond practical questions of enrollment and employment to fundamental questions about the purpose of higher education. Should universities primarily serve as pipelines to employment, or do they bear a broader responsibility to cultivate citizens capable of critical thought, ethical reasoning, and appreciation of cultural heritage? How societies answer these questions will shape not only the future of the humanities but the character of democratic citizenship in an increasingly complex world.`, keywords:["humanities","discipline","enrollment","vocational","longitudinal","analytical","curricula","innovation","heritage","democratic"] },
+  { cat:"教育", source:"Education Week", date:"2026-05", title:"Rethinking Assessment: The Global Movement Away from Standardized Testing", desc:`A quiet but profound transformation is underway in educational assessment. After decades in which standardized testing dominated education systems from primary school through university admission, a growing movement of educators, policymakers, and researchers is advocating for more holistic approaches to evaluating student learning and potential.
+
+The critique of standardized testing rests on multiple pillars. Research consistently shows that test scores correlate more strongly with family income and parental education levels than with college performance or career success, raising fundamental questions about equity and fairness. The narrowing effect of high-stakes testing—in which curriculum is reduced to tested subjects and teachers are pressured to "teach to the test"—has been documented across educational systems worldwide.
+
+The COVID-19 pandemic accelerated the reassessment by creating a natural experiment. When testing requirements were temporarily suspended for university admissions, institutions were forced to rely on other indicators—grades, essays, recommendations, portfolios. Subsequent analysis found that admissions decisions made without test scores were not significantly less predictive of student success than those made with them.
+
+Alternative assessment models are proliferating. Performance-based assessment, in which students demonstrate competencies through projects, presentations, and portfolios rather than timed examinations, has gained significant traction. The Mastery Transcript Consortium, a network of over 300 schools, has developed a digital transcript that replaces traditional grades with evidence of specific skills and competencies.
+
+Technology is enabling new forms of assessment that were previously impractical. Adaptive testing platforms can adjust question difficulty in real time based on student responses, providing more precise measurements of ability while reducing testing time. Simulation-based assessments can evaluate complex skills—collaboration, problem-solving, ethical reasoning—that traditional multiple-choice tests cannot capture.
+
+The movement is not without its critics. Defenders of standardized testing argue that it provides the only objective, comparable metric in an otherwise subjective landscape, particularly important for identifying talented students from disadvantaged backgrounds who might otherwise be overlooked. There are also legitimate concerns that alternative assessment methods, while educationally superior, may be more susceptible to bias and harder to implement at scale.
+
+The emerging consensus among assessment experts is not that testing should be eliminated but that it should be reimagined as one component within a broader, more balanced system of evidence about student learning—a shift from measurement as an end in itself to assessment in service of learning.`, keywords:["assessment","holistic","curriculum","equity","indicator","competency","simulation","metric","consensus","component"] }
+];
+
+function renderNews() {
+  const catBar = document.getElementById('newsCatBar');
+  const categories = [...new Set(NEWS.map(a => a.cat))];
+  catBar.innerHTML = `<button class="news-source-btn active" data-cat="all">全部 (${NEWS.length})</button>` +
+    categories.map(c => `<button class="news-source-btn" data-cat="${c}">${c} (${NEWS.filter(a=>a.cat===c).length})</button>`).join('');
+
+  catBar.querySelectorAll('.news-source-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      catBar.querySelectorAll('.news-source-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      renderNewsList(this.dataset.cat);
+    });
+  });
+
+  renderNewsList('all');
+}
+
+function renderNewsList(cat) {
+  const list = cat === 'all' ? NEWS : NEWS.filter(a => a.cat === cat);
+  window._newsCache = list;
+  document.getElementById('newsContent').innerHTML = list.map((a, i) => `
+    <div class="news-card" onclick="showNewsDetail(${i})">
+      <span class="news-source">${a.source}</span>
+      <span style="padding:2px 8px;background:var(--c-tag-bg);border-radius:4px;font-size:.7rem;color:var(--c-accent);margin-right:8px">${a.cat}</span>
+      <span class="news-meta">${a.date}</span>
+      <div class="news-title">${escapeHtml(a.title)}</div>
+      <div class="news-desc">${escapeHtml(a.desc.substring(0, 180))}...</div>
+    </div>
+  `).join('');
+}
+
+function showNewsDetail(idx) {
+  const item = window._newsCache ? window._newsCache[idx] : null;
+  if (!item) return;
+  const paragraphs = item.desc.split('\n\n').filter(p => p.trim());
+  document.getElementById('readContent').innerHTML = `
+    <div class="dict-word" style="font-size:1.4rem;margin-bottom:4px">${escapeHtml(item.title)}</div>
+    <p style="color:var(--c-dim);font-size:.8rem;margin-bottom:16px">${item.source} · ${item.date} · ${item.cat}</p>
+    <div style="color:var(--c-text2);line-height:2;font-size:.95rem">
+      ${paragraphs.length > 1
+        ? paragraphs.map(p => `<p style="margin-bottom:16px;text-align:justify">${escapeHtml(p.trim())}</p>`).join('')
+        : `<p style="text-align:justify">${escapeHtml(item.desc)}</p>`}
+    </div>
+    ${item.keywords ? `<div style="background:var(--c-bg-deep);padding:16px;border-radius:8px;margin-top:20px">
+      <p style="color:var(--c-green);font-weight:600;margin-bottom:8px">核心关键词：</p>
+      <div class="dict-syn">${item.keywords.map(k => `<span onclick="lookupWord('${k}')">${k}</span>`).join('')}</div>
+    </div>` : ''}
+    <button class="btn btn-gray" style="margin-top:16px" onclick="closeReader()">关闭</button>
+  `;
+  document.getElementById('readOverlay').classList.add('show');
+}
+
+function closeReader() {
+  document.getElementById('readOverlay').classList.remove('show');
+}
+
+function escapeHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ═══════════════════ 六级真题 ═══════════════════
+document.querySelectorAll('.practice-tabs button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.practice-tabs button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    document.querySelectorAll('.practice-subview').forEach(v => v.classList.remove('active'));
+    document.getElementById('sub-' + this.dataset.sub).classList.add('active');
+    const sub = this.dataset.sub;
+    if (sub === 'reading') renderReading();
+    if (sub === 'cloze') renderCloze();
+    if (sub === 'banked') renderBankedCloze();
+    if (sub === 'translation') renderTranslation();
+    if (sub === 'writing') renderWriting();
+  });
+});
+
+const READINGS = [
+  { title:"Passage 1 — The Rise of Remote Work", text:`The COVID-19 pandemic fundamentally altered the global work landscape, accelerating a shift toward <span class="highlight">remote</span> work that had been gradually gaining <span class="highlight">momentum</span> for years. Prior to 2020, approximately 5% of the American workforce operated from home on a full-time basis. By mid-2021, that figure had surged to nearly 40%, and while it has since stabilized, it remains substantially higher than pre-pandemic levels.<br><br>This transformation has brought both opportunities and challenges. On the positive side, many employees report improved work-life balance, <span class="highlight">eliminating</span> lengthy commutes and allowing for more <span class="highlight">flexible</span> schedules. Companies have <span class="highlight">benefited from</span> reduced office overhead and the ability to recruit talent from a broader <span class="highlight">geographic</span> pool. Productivity metrics, <span class="highlight">contrary to</span> early <span class="highlight">skepticism</span>, have generally held steady or even improved in many sectors.<br><br>However, significant <span class="highlight">drawbacks</span> have emerged. The <span class="highlight">blurring</span> of boundaries between work and personal life has led to increased burnout for some. <span class="highlight">Furthermore</span>, the loss of spontaneous face-to-face interaction has <span class="highlight">undermined</span> <span class="highlight">mentorship</span> opportunities and <span class="highlight">impeded</span> the organic exchange of ideas that often <span class="highlight">drives</span> <span class="highlight">innovation</span>. Junior employees, <span class="highlight">in particular</span>, have found it harder to learn from senior colleagues and <span class="highlight">establish</span> professional networks.`, questions:[{q:"What was the approximate percentage of American workers working from home full-time before 2020?",opts:["A) About 5%","B) About 20%","C) About 40%","D) About 50%"],ans:0},{q:"According to the passage, which is a benefit of remote work for companies?",opts:["A) Increased office overhead","B) Reduced office overhead","C) More face-to-face interaction","D) Fewer talented employees"],ans:1},{q:"The word 'skepticism' in the passage is closest in meaning to ____.",opts:["A) enthusiasm","B) confidence","C) doubt","D) optimism"],ans:2},{q:"Which group is mentioned as particularly disadvantaged by remote work?",opts:["A) Senior managers","B) IT professionals","C) Junior employees","D) Freelancers"],ans:2},{q:"What is the author's overall attitude toward remote work?",opts:["A) Entirely negative","B) Balanced, acknowledging pros and cons","C) Entirely positive","D) Indifferent"],ans:1}] },
+  { title:"Passage 2 — The Environmental Cost of Fast Fashion", text:`The fashion industry ranks among the world's most environmentally damaging sectors, responsible for approximately 10% of global carbon emissions and nearly 20% of <span class="highlight">industrial</span> water pollution. The rise of 'fast fashion'—a business model characterized by rapid production cycles and low-cost garments designed for short-term use—has dramatically <span class="highlight">exacerbated</span> these environmental impacts.<br><br>A single cotton t-shirt requires an estimated 2,700 liters of water to produce, <span class="highlight">equivalent to</span> what an <span class="highlight">average</span> person drinks in two and a half years. Synthetic fibers like polyester, which now <span class="highlight">account for</span> over 60% of global clothing production, shed <span class="highlight">microplastics</span> with every wash. These particles eventually make their way into oceans, where they enter the food chain with <span class="highlight">potentially</span> devastating <span class="highlight">consequences</span> for marine life and, <span class="highlight">ultimately</span>, human health.<br><br>The social <span class="highlight">dimension</span> is equally troubling. Garment workers in developing countries often <span class="highlight">endure</span> unsafe conditions and <span class="highlight">inadequate</span> wages. The 2013 Rana Plaza collapse in Bangladesh, which killed over 1,100 workers, brought global <span class="highlight">attention</span> to these issues but <span class="highlight">meaningful</span> reform has been slow.<br><br><span class="highlight">Nevertheless</span>, there are signs of change. A growing number of <span class="highlight">consumers</span> are <span class="highlight">embracing</span> 'slow fashion,' <span class="highlight">prioritizing</span> quality, durability, and <span class="highlight">ethical</span> production. Some major brands have launched recycling programs and committed to using <span class="highlight">sustainable</span> materials, though critics <span class="highlight">argue</span> these efforts remain <span class="highlight">insufficient</span> <span class="highlight">in the face of</span> the industry's sheer scale.`, questions:[{q:"According to the passage, approximately what percentage of global carbon emissions comes from the fashion industry?",opts:["A) 5%","B) 10%","C) 20%","D) 30%"],ans:1},{q:"How much water does a single cotton t-shirt require to produce?",opts:["A) 270 liters","B) 1,200 liters","C) 2,700 liters","D) 5,400 liters"],ans:2},{q:"What environmental problem do synthetic fibers cause?",opts:["A) They release toxic gases","B) They shed microplastics when washed","C) They deplete the ozone layer","D) They cause acid rain"],ans:1},{q:"What event is mentioned as drawing global attention to garment worker conditions?",opts:["A) The Paris Agreement","B) The Rana Plaza collapse","C) The Kyoto Protocol","D) The UN Climate Summit"],ans:1},{q:"What is the main purpose of the passage?",opts:["A) To promote fast fashion brands","B) To describe the history of fashion","C) To highlight the environmental and social costs of fast fashion","D) To argue against clothing recycling"],ans:2}] },
+  { title:"Passage 3 — The Future of Artificial Intelligence in Education", text:`Artificial intelligence is <span class="highlight">poised to</span> <span class="highlight">transform</span> education in ways that were once the <span class="highlight">province</span> of science fiction. From <span class="highlight">adaptive</span> learning platforms that tailor <span class="highlight">curriculum</span> to <span class="highlight">individual</span> student needs, to automated grading systems that free teachers from hours of <span class="highlight">routine</span> work, AI is already making inroads into classrooms around the world.<br><br>The most promising applications of educational AI <span class="highlight">involve</span> personalization. Traditional classrooms, by <span class="highlight">necessity</span>, teach to the <span class="highlight">average</span> student—leaving some learners bored and others struggling to keep up. AI-powered systems can <span class="highlight">assess</span> a student's strengths, weaknesses, and learning style in real time, then <span class="highlight">adjust</span> the difficulty, format, and pacing of material <span class="highlight">accordingly</span>. This <span class="highlight">approach</span> has shown <span class="highlight">remarkable</span> results in early trials, particularly in subjects like mathematics and language learning.<br><br>However, the integration of AI into education raises profound questions. There are legitimate concerns about data <span class="highlight">privacy</span>, as these systems collect <span class="highlight">enormous</span> amounts of <span class="highlight">sensitive</span> information about children. The <span class="highlight">potential</span> for <span class="highlight">bias</span> in AI algorithms—which may <span class="highlight">perpetuate</span> existing <span class="highlight">inequalities</span>—is another serious worry. Most fundamentally, education is not merely about the <span class="highlight">transmission</span> of knowledge but about nurturing <span class="highlight">critical thinking</span>, creativity, and emotional <span class="highlight">intelligence</span>—qualities that remain <span class="highlight">distinctively</span> human and may prove <span class="highlight">resistant</span> to <span class="highlight">automation</span>.<br><br>The <span class="highlight">consensus</span> among experts is that AI should serve as a tool to <span class="highlight">augment</span> rather than replace teachers. The most effective models combine AI-driven <span class="highlight">instruction</span> with human <span class="highlight">mentorship</span>, <span class="highlight">harnessing</span> the <span class="highlight">strengths</span> of both.`, questions:[{q:"What is the most promising application of AI in education according to the passage?",opts:["A) Automated grading","B) Personalization of learning","C) Reducing teacher salaries","D) Eliminating homework"],ans:1},{q:"Which concern about educational AI is NOT mentioned in the passage?",opts:["A) Data privacy","B) Algorithmic bias","C) Increased school fees","D) Loss of focus on critical thinking"],ans:2},{q:"What do experts believe AI's role in education should be?",opts:["A) To completely replace teachers","B) To augment rather than replace teachers","C) To eliminate all human interaction","D) To reduce education costs only"],ans:1},{q:"The word 'augment' in the last paragraph is closest in meaning to ____.",opts:["A) replace","B) reduce","C) enhance","D) criticize"],ans:2},{q:"Which of the following best summarizes the passage?",opts:["A) AI will completely replace human teachers within a decade","B) AI offers significant benefits for personalized education but raises important concerns","C) AI has failed to deliver any meaningful improvements in education","D) Education should resist all forms of technological change"],ans:1}] },
+  { title:"Passage 4 — The Double-Edged Sword of Globalization", text:`Globalization has been one of the most <span class="highlight">controversial</span> topics of the past half-century. Its <span class="highlight">proponents</span> argue that the <span class="highlight">integration</span> of national economies has lifted hundreds of millions out of poverty, facilitated the spread of technology and ideas, and fostered unprecedented levels of international cooperation. <span class="highlight">Critics</span>, however, point to widening <span class="highlight">inequality</span>, the erosion of local cultures, and the <span class="highlight">exploitation</span> of workers in developing countries.<br><br>The economic <span class="highlight">evidence</span> is mixed. In China and India, trade liberalization has <span class="highlight">coincided</span> with dramatic reductions in poverty and the emergence of a <span class="highlight">substantial</span> middle class. Yet in many Western countries, the same forces have been associated with the decline of manufacturing, stagnant wages for low-skilled workers, and growing <span class="highlight">resentment</span> toward the political <span class="highlight">establishment</span>.<br><br>Culturally, globalization has created what some scholars call a '<span class="highlight">paradox</span> of plenty.' While individuals now have <span class="highlight">access</span> to an <span class="highlight">unprecedented</span> <span class="highlight">diversity</span> of cultural products—from K-pop to Hollywood to Bollywood—there are legitimate fears that this abundance masks a <span class="highlight">homogenizing</span> <span class="highlight">tendency</span>, as global media <span class="highlight">giants</span> <span class="highlight">dominate</span> local markets.<br><br>The challenge for policymakers is to <span class="highlight">harness</span> the benefits of globalization while <span class="highlight">mitigating</span> its harmful effects. This requires <span class="highlight">robust</span> social safety nets, investment in education and retraining, and international agreements that ensure the gains from trade are more <span class="highlight">equitably</span> distributed.`, questions:[{q:"According to the passage, which country is mentioned as having experienced poverty reduction alongside trade liberalization?",opts:["A) The United States","B) Japan","C) China and India","D) Germany"],ans:2},{q:"What negative effect of globalization in Western countries does the passage mention?",opts:["A) Increased immigration","B) Decline of manufacturing","C) Higher education costs","D) Reduced international trade"],ans:1},{q:"The 'paradox of plenty' refers to ____.",opts:["A) too much food causing obesity","B) abundant cultural choices potentially leading to cultural homogenization","C) too many jobs but not enough workers","D) excess wealth causing corruption"],ans:1},{q:"What does the author suggest policymakers should do?",opts:["A) Stop globalization entirely","B) Ignore the negative effects","C) Harness benefits while mitigating harmful effects","D) Focus only on economic growth"],ans:2},{q:"The author's tone in this passage is best described as ____.",opts:["A) passionate and emotional","B) balanced and analytical","C) sarcastic and mocking","D) enthusiastic and promotional"],ans:1}] },
+  { title:"Passage 5 — The Psychology of Habit Formation", text:`Understanding how habits form is crucial for anyone seeking to make lasting changes in their personal or professional life. <span class="highlight">According to</span> researchers at University College London, it takes an <span class="highlight">average</span> of 66 days for a new behavior to become <span class="highlight">automatic</span>, though the range varies widely <span class="highlight">depending on</span> the <span class="highlight">complexity</span> of the behavior and the individual.<br><br>The <span class="highlight">neurological</span> basis of habit formation lies in a process called 'chunking,' in which the brain <span class="highlight">converts</span> a <span class="highlight">sequence</span> of actions into an automatic routine. This is <span class="highlight">highly</span> <span class="highlight">efficient</span> from an <span class="highlight">evolutionary</span> <span class="highlight">perspective</span>, as it frees up mental resources for other tasks. However, the same <span class="highlight">mechanism</span> that makes good habits stick also makes bad habits <span class="highlight">notoriously</span> difficult to break.<br><br>Charles Duhigg, in his bestselling book "The Power of Habit," <span class="highlight">identifies</span> a three-step loop: cue, routine, and reward. The cue <span class="highlight">triggers</span> the brain to <span class="highlight">initiate</span> a behavior, the routine is the behavior itself, and the reward helps the brain determine whether this loop is worth remembering. Understanding this loop is the key to both building positive habits and <span class="highlight">dismantling</span> negative ones.<br><br>Recent research has also <span class="highlight">highlighted</span> the importance of <span class="highlight">environment</span> in habit formation. People who <span class="highlight">restructure</span> their surroundings to make desired behaviors easier and undesired behaviors harder are <span class="highlight">significantly</span> more likely to succeed. This insight has <span class="highlight">profound</span> <span class="highlight">implications</span> for everything from personal fitness to organizational change.`, questions:[{q:"According to UCL research, how long does it take on average for a new behavior to become automatic?",opts:["A) 21 days","B) 30 days","C) 66 days","D) 90 days"],ans:2},{q:"What is 'chunking' in the context of habit formation?",opts:["A) Breaking large tasks into small pieces","B) The brain converting a sequence of actions into an automatic routine","C) Memorizing information in groups","D) Eating small portions of food"],ans:1},{q:"According to Duhigg, what are the three components of the habit loop?",opts:["A) Thought, action, reflection","B) Cue, routine, reward","C) Plan, execute, review","D) Desire, behavior, satisfaction"],ans:1},{q:"What does recent research emphasize about habit formation?",opts:["A) The importance of willpower","B) The role of genetics","C) The importance of environment","D) The need for professional coaching"],ans:2},{q:"Which of the following best captures the main idea of the passage?",opts:["A) Habits are impossible to change","B) Understanding the science of habits can help people build good ones and break bad ones","C) Only professional psychologists can understand habits","D) Habits are purely genetic and cannot be learned"],ans:1}] }
+];
+
+const CLOZE = [
+  {
+    title:"Cloze 1 — The Sharing Economy",
+    text:`The sharing economy has (1)_____ from a niche concept to a global phenomenon in less than a decade. Companies like Airbnb and Uber have fundamentally (2)_____ how people travel and commute, challenging traditional industries and regulatory (3)_____. The appeal of the sharing economy lies in its promise of efficiency: (4)_____ underutilized assets—whether spare rooms, idle cars, or unused tools—can generate income for owners while providing (5)_____ services for consumers. However, this new economic model has not been without (6)_____. Critics argue that it has contributed to rising housing costs, (7)_____ labor protections, and created a class of workers who lack the benefits and security of traditional employment. Governments around the world have struggled to (8)_____ these platforms, caught between the desire to encourage innovation and the need to protect consumers and workers. The (9)_____ of the sharing economy will likely depend on whether these tensions can be (10)_____.`,
+    answers:["emerged","transformed","frameworks","monetizing","affordable","controversy","eroded","regulate","future","resolved"],
+    options:["emerged|declined|suffered|escaped","transformed|destroyed|ignored|confused","frameworks|problems|issues|standards","monetizing|ignoring|hiding|damaging","affordable|expensive|useless|dangerous","controversy|success|agreement|progress","eroded|improved|created|protected","regulate|promote|ignore|close","future|past|failure|success","resolved|created|worsened|ignored"]
+  },
+  {
+    title:"Cloze 2 — The Decline of Attention Span",
+    text:`In the digital age, the human attention span appears to be (1)_____. A widely cited study suggests that the average attention span has (2)_____ from 12 seconds in 2000 to just 8 seconds today—shorter than that of a goldfish. While some researchers (3)_____ the methodology of such studies, there is little doubt that our relationship with (4)_____ has fundamentally changed. The constant stream of notifications, updates, and messages has (5)_____ our ability to focus on a single task for (6)_____ periods. This phenomenon has significant (7)_____ for education, workplace productivity, and even mental health. Some experts recommend "digital detoxes" and mindfulness practices as (8)_____, while others argue that we are simply (9)_____ to a new cognitive environment. What seems (10)_____ is that the ability to manage one's attention is becoming an increasingly valuable skill.`,
+    answers:["shrinking","dropped","question","information","impaired","extended","implications","remedies","adapting","clear"],
+    options:["shrinking|growing|stable|improving","dropped|increased|stayed|risen","question|accept|believe|promote","information|money|friends|food","impaired|improved|helped|supported","extended|short|limited|brief","implications|benefits|solutions|problems","remedies|problems|causes|questions","adapting|resisting|ignoring|destroying","clear|unclear|doubtful|questionable"]
+  }
+];
+
+const BANKED_CLOZE = [
+  {
+    title:"Banked Cloze 1 — Urban Green Spaces",
+    text:`Urban planners are increasingly recognizing the importance of green spaces in cities. Parks, gardens, and tree-lined streets do more than simply beautify the urban landscape; they provide (1)_____ benefits for public health, social cohesion, and even local economies. Studies have shown that access to green spaces is (2)_____ with lower rates of obesity, depression, and anxiety. Green spaces also help to (3)_____ the urban heat island effect, absorb carbon dioxide, and reduce air pollution. Despite these well-documented benefits, green spaces in many cities remain (4)_____ distributed, with wealthier neighborhoods enjoying significantly more tree cover and parkland than poorer areas. This environmental (5)_____ has become a focus of urban activism. Many cities have now launched (6)_____ initiatives to create new parks and green corridors in underserved communities. The challenge is to ensure that these efforts are (7)_____ and not merely cosmetic. Experts emphasize that community (8)_____ is essential in the planning process, as local residents know best what their neighborhoods need. Ultimately, the goal is to create cities where nature is not a (9)_____ but an integral part of everyday life. When green spaces are woven into the urban fabric, everyone (10)_____.`,
+    pool:["significant","associated","mitigate","unevenly","inequality","ambitious","sustainable","involvement","luxury","benefits"],
+    answers:["significant","associated","mitigate","unevenly","inequality","ambitious","sustainable","involvement","luxury","benefits"],
+    distractors:["temporary","damaged","identical","rarely","neglected","improvement","simple","division","burden","suffers"]
+  },
+  {
+    title:"Banked Cloze 2 — The Rise of E-Learning",
+    text:`The COVID-19 pandemic served as a (1)_____ for the widespread adoption of online education. Within weeks, millions of students around the world (2)_____ from physical classrooms to virtual learning environments. This rapid transition revealed both the (3)_____ and the limitations of e-learning. On the positive side, online platforms offer (4)_____ flexibility, allowing students to learn at their own pace and (5)_____ materials as many times as needed. Geographical barriers are effectively (6)_____, making quality education accessible to remote communities. However, the digital (7)_____ has also been starkly exposed. Students without reliable internet access or suitable devices have been left behind, (8)_____ existing educational inequalities. Moreover, the lack of face-to-face interaction has raised concerns about social development and the quality of student-teacher relationships. As educational institutions look to the future, most experts predict a (9)_____ model that combines the best elements of online and in-person instruction. This approach, often called "blended learning," may well represent the future of education, though its successful (10)_____ will require significant investment in both technology and teacher training.`,
+    pool:["catalyst","transitioned","potential","unprecedented","review","eliminated","divide","exacerbating","hybrid","implementation"],
+    answers:["catalyst","transitioned","potential","unprecedented","review","eliminated","divide","exacerbating","hybrid","implementation"],
+    distractors:["barrier","returned","danger","limited","ignore","created","solution","reducing","traditional","failure"]
+  }
+];
+
+const TRANSLATIONS = [
+  {zh:"随着互联网的普及，越来越多的人选择在线购物而不是去实体店。",en:"With the popularization of the Internet, an increasing number of people choose to shop online rather than visit physical stores."},
+  {zh:"不可否认，人工智能正在深刻地改变我们的生活方式和工作模式。",en:"There is no denying that artificial intelligence is profoundly transforming our lifestyles and working patterns."},
+  {zh:"尽管面临诸多挑战，中国在可再生能源领域取得的成就有目共睹。",en:"Despite facing numerous challenges, China's achievements in the field of renewable energy are evident to all."},
+  {zh:"只有通过国际合作，我们才能有效应对气候变化带来的威胁。",en:"Only through international cooperation can we effectively address the threats posed by climate change."},
+  {zh:"许多专家认为，终身学习将成为未来社会的必要条件。",en:"Many experts believe that lifelong learning will become a necessary requirement in the future society."},
+  {zh:"智能手机的广泛使用极大地改变了人们的社交方式和信息获取途径。",en:"The widespread use of smartphones has dramatically changed the way people socialize and access information."},
+  {zh:"政府在促进经济发展和保障社会公平之间需要找到平衡点。",en:"The government needs to strike a balance between promoting economic development and ensuring social equity."},
+  {zh:"传统文化的保护和传承对于维护一个民族的身份认同至关重要。",en:"The preservation and inheritance of traditional culture is of vital importance to maintaining a nation's identity."},
+  {zh:"越来越多的人意识到，物质财富并不是衡量幸福的唯一标准。",en:"A growing number of people have come to realize that material wealth is not the sole criterion for measuring happiness."},
+  {zh:"毫无疑问，科技创新将继续推动人类社会向前发展。",en:"There is no doubt that technological innovation will continue to drive human society forward."},
+  {zh:"尽管电子书越来越流行，许多人仍然偏爱纸质书的阅读体验。",en:"Despite the growing popularity of e-books, many people still prefer the reading experience of printed books."},
+  {zh:"为了缓解交通拥堵，许多大城市已经开始推广公共交通和共享单车。",en:"To alleviate traffic congestion, many large cities have begun to promote public transportation and shared bicycles."},
+  {zh:"在线教育使得偏远地区的学生也能享受到优质的教育资源。",en:"Online education enables students in remote areas to access high-quality educational resources."},
+  {zh:"年轻人应该把更多的精力放在学习上，而不是沉迷于网络游戏。",en:"Young people should devote more energy to studying rather than indulging in online games."},
+  {zh:"志愿者活动不仅帮助了需要帮助的人，也丰富了参与者的人生经历。",en:"Volunteer activities not only help those in need but also enrich the life experiences of the participants."},
+];
+
+const WRITINGS = [
+  { title:"Topic 1: The Impact of Social Media on Interpersonal Relationships", outline:"① Introduction: Social media has revolutionized how we communicate. ② Body Para 1: Positive effects — staying connected, finding communities, breaking geographic barriers. ③ Body Para 2: Negative effects — superficial connections, decreased face-to-face skills, cyberbullying. ④ Conclusion: Balance is key; use social media as a supplement, not a replacement.", sample:"Social media has fundamentally transformed the landscape of human interaction in the 21st century. On the positive side, platforms like WeChat and Weibo have made it possible to maintain relationships across vast distances, reconnect with old friends, and discover communities of like-minded individuals. However, the prevalence of online communication has also given rise to concerns about the depth and authenticity of modern relationships. Many people now substitute genuine face-to-face conversations with superficial online interactions. Furthermore, excessive social media use has been linked to increased feelings of loneliness and anxiety. In my view, the key lies in striking a balance: we should harness the connective power of social media while ensuring it complements rather than replaces meaningful real-world connections." },
+  { title:"Topic 2: Whether Higher Education Should Focus More on Practical Skills", outline:"① Introduction: The debate between theoretical knowledge and practical skills in universities. ② Body Para 1: Arguments for practical focus — better employability, meeting market demands, reducing the skill gap. ③ Body Para 2: Arguments for theoretical foundation — critical thinking, innovation, liberal education. ④ Conclusion: Universities should integrate both; practical skills and theoretical knowledge are not mutually exclusive.", sample:"The question of whether universities should prioritize practical skills over theoretical knowledge has sparked considerable debate. Proponents of a more practical curriculum argue that many graduates lack the hands-on abilities employers demand, leading to a mismatch between education and the labor market. By incorporating more internships, project-based learning, and vocational training, universities could significantly enhance graduates' employability. On the other hand, defenders of traditional academia contend that higher education's primary mission is to cultivate critical thinking, intellectual curiosity, and the capacity for independent inquiry—skills that transcend any specific job. I believe the most effective approach is to integrate both dimensions, equipping students with marketable abilities while preserving the broader intellectual mission of university education." },
+  { title:"Topic 3: The Role of Individual Action in Environmental Protection", outline:"① Introduction: Environmental protection requires both collective and individual effort. ② Body Para 1: What individuals can do — reduce, reuse, recycle, conserve energy, sustainable consumption. ③ Body Para 2: Limitations of individual action — systemic issues require policy changes and corporate responsibility. ④ Conclusion: Individual actions matter but must be combined with systemic change.", sample:"Climate change and environmental degradation are among the most pressing challenges of our era, and the role of individual action in addressing them is a subject of ongoing discussion. On an individual level, there is much we can do: adopting a low-carbon lifestyle, reducing single-use plastics, conserving water and electricity, and making more sustainable consumption choices. Cumulatively, these actions can have a substantial impact. However, it would be naive to suggest that individual efforts alone can solve problems that are fundamentally structural. Industrial pollution, deforestation, and fossil fuel dependency are driven by corporate and governmental policies that require systemic reform. Therefore, while we should all strive to live more sustainably, we must also advocate for stronger environmental regulations and hold corporations accountable for their ecological footprint." }
+];
+
+const WRITING_TEMPLATES = [
+  { en:"It is universally acknowledged that...", zh:"众所周知…", use:"开篇引出普遍观点" },
+  { en:"There is no denying that...", zh:"不可否认的是…", use:"强调事实" },
+  { en:"It goes without saying that...", zh:"不言而喻…", use:"引出明显的事实" },
+  { en:"A growing body of evidence suggests that...", zh:"越来越多的证据表明…", use:"引用研究/数据" },
+  { en:"From my perspective, ...", zh:"在我看来…", use:"表达个人观点" },
+  { en:"There are several compelling reasons why...", zh:"有几个令人信服的理由说明…", use:"引出多个论点" },
+  { en:"On the one hand... On the other hand...", zh:"一方面…另一方面…", use:"对比论述" },
+  { en:"It is worth noting that...", zh:"值得注意的是…", use:"强调重要信息" },
+  { en:"... play a crucial role in ...", zh:"…在…中发挥着至关重要的作用", use:"强调重要性" },
+  { en:"Only by ... can we ...", zh:"只有通过…我们才能…", use:"倒装强调" },
+  { en:"The reason why ... is that ...", zh:"…的原因是…", use:"解释原因" },
+  { en:"... is closely related to ...", zh:"…与…密切相关", use:"建立关联" },
+  { en:"To sum up, ...", zh:"总而言之…", use:"结论段开头" },
+  { en:"All things considered, ...", zh:"综合各方面来看…", use:"总结全文" },
+  { en:"It is high time that we ...", zh:"我们早该…", use:"呼吁行动(虚拟语气)" },
+  { en:"Measures should be taken to ...", zh:"应该采取措施来…", use:"提出建议" },
+  { en:"... should attach great importance to ...", zh:"…应该高度重视…", use:"强调重视程度" },
+  { en:"... will exert a profound impact on ...", zh:"…将对…产生深远影响", use:"描述影响" },
+  { en:"Compared with ..., ... has its own advantages.", zh:"与…相比，…有其自身的优势", use:"比较句型" },
+  { en:"Nothing is more important than ...", zh:"没有什么比…更重要", use:"最高级强调" }
+];
+
+function renderReading() {
+  document.getElementById('sub-reading').innerHTML = READINGS.map((p, pi) => `
+    <div class="passage-card">
+      <div class="passage-title">${p.title}</div>
+      <div class="passage-text">${p.text}</div>
+      ${p.questions.map((q, qi) => `
+        <div class="passage-q">
+          <div class="q-text">${qi + 1}. ${q.q}</div>
+          ${q.opts.map(o => `<span class="q-opt">${o}</span>`).join('')}
+          <button class="btn btn-blue" style="padding:4px 10px;font-size:.7rem;margin-top:4px" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">显示答案</button>
+          <div class="show-answer" id="ans-${pi}-${qi}">答案: ${q.opts[q.ans]}</div>
+        </div>
+      `).join('')}
+      <button class="btn btn-blue" style="margin-top:12px" onclick="var card=this.closest('.passage-card');card.querySelectorAll('.show-answer').forEach(el=>el.style.display='block');card.querySelectorAll('.passage-q .btn').forEach(el=>el.style.display='none')">显示全部答案</button>
+    </div>
+  `).join('');
+}
+
+function renderCloze() {
+  document.getElementById('sub-cloze').innerHTML = CLOZE.map((c, ci) => {
+    const opts = c.options.map(o => o.split('|'));
+    const textParts = c.text.replace(/\(\d+\)/g, (match) => {
+      const num = parseInt(match.match(/\d+/)[0]) - 1;
+      return `<span class="cloze-blank" id="c${ci}-${num}" onclick="revealCloze('c${ci}-${num}','${c.answers[num]}')">___</span>`;
+    });
+    return `<div class="passage-card"><div class="passage-title">${c.title}</div>
+      <div class="cloze-text">${textParts}</div>
+      <p style="color:var(--c-muted);font-size:.8rem;margin-bottom:6px">点击横线查看答案，或查看下方选项：</p>
+      <div class="cloze-options">${c.answers.map(a => `<span class="opt-chip">${a}</span>`).join('')}</div></div>`;
+  }).join('');
+}
+
+function revealCloze(id, answer) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = answer;
+  el.classList.add('revealed');
+}
+
+function renderBankedCloze() {
+  document.getElementById('sub-banked').innerHTML = BANKED_CLOZE.map((bc, bi) => {
+    const allWords = [...bc.pool, ...bc.distractors];
+    shuffle(allWords);
+    let ansIdx = 0;
+    const textParts = bc.text.replace(/\(\d+\)/g, () => {
+      const blankId = `b${bi}-${ansIdx}`;
+      const answer = bc.answers[ansIdx];
+      ansIdx++;
+      return `<select class="filter-select" id="${blankId}" style="padding:4px 8px;font-size:.85rem;margin:0 2px;width:auto" onchange="checkBankedClozeSelect(this,'${answer}')">
+        <option value="">--选词--</option>
+        ${allWords.map(w => `<option value="${w}">${w}</option>`).join('')}
+      </select>`;
+    });
+    return `<div class="passage-card"><div class="passage-title">${bc.title}</div>
+      <div class="cloze-text">${textParts}</div>
+      <button class="btn btn-blue" style="margin-top:8px" onclick="showBankedAnswers(${bi})">显示全部答案</button>
+      <button class="btn btn-green" style="margin-top:8px;margin-left:8px" onclick="resetBankedCloze(${bi})">重置</button></div>`;
+  }).join('');
+}
+
+function checkBankedClozeSelect(select, answer) {
+  if (select.value === answer) { select.style.borderColor = '#059669'; select.style.color = 'var(--c-green)'; }
+  else if (select.value) { select.style.borderColor = '#dc2626'; select.style.color = '#fca5a5'; }
+}
+
+function showBankedAnswers(bi) {
+  const bc = BANKED_CLOZE[bi];
+  bc.answers.forEach((a, i) => {
+    const sel = document.getElementById(`b${bi}-${i}`);
+    if (sel) { sel.value = a; sel.style.borderColor = '#059669'; sel.style.color = 'var(--c-green)'; }
+  });
+}
+
+function resetBankedCloze(bi) {
+  const bc = BANKED_CLOZE[bi];
+  bc.answers.forEach((a, i) => {
+    const sel = document.getElementById(`b${bi}-${i}`);
+    if (sel) { sel.value = ''; sel.style.borderColor = 'var(--c-dim)'; sel.style.color = 'var(--c-text)'; }
+  });
+}
+
+function renderTranslation() {
+  document.getElementById('sub-translation').innerHTML = `
+    <p style="color:var(--c-muted);margin-bottom:16px;font-size:.85rem">共 ${TRANSLATIONS.length} 题 | 汉译英练习（六级标准）</p>
+    ${TRANSLATIONS.map((t, i) => `
+    <div class="translate-card">
+      <div class="zh-source">${i + 1}. ${t.zh}</div>
+      <button class="btn btn-green btn-reveal" onclick="this.style.display='none';this.nextElementSibling.style.display='block'">显示参考译文</button>
+      <div class="en-answer">${t.en}</div>
+    </div>
+  `).join('')}`;
+}
+
+function renderWriting() {
+  document.getElementById('sub-writing').innerHTML = `
+    <div class="practice-tabs" style="margin-bottom:16px">
+      <button class="active" data-wsub="topics">作文题目</button>
+      <button data-wsub="templates">写作模板</button>
+    </div>
+    <div id="wsub-topics" class="practice-subview active">${WRITINGS.map(w => `
+      <div class="topic-card">
+        <div class="topic-title">${w.title}</div>
+        <div class="topic-outline"><strong>提纲：</strong><br>${w.outline}</div>
+        <button class="btn btn-purple" style="margin-top:8px" onclick="this.style.display='none';this.nextElementSibling.style.display='block'">显示范文</button>
+        <div class="topic-sample">${w.sample}</div>
+      </div>
+    `).join('')}</div>
+    <div id="wsub-templates" class="practice-subview">
+      <p style="color:var(--c-muted);margin-bottom:14px;font-size:.85rem">常用写作句型模板 | 六级作文高分利器</p>
+      ${WRITING_TEMPLATES.map(t => `
+        <div class="template-card">
+          <div class="tpl-title">${t.use}</div>
+          <div class="tpl-en">${t.en}</div>
+          <div class="tpl-zh">${t.zh}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  // 写作子标签切换
+  document.querySelectorAll('#sub-writing .practice-tabs button').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#sub-writing .practice-tabs button').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelectorAll('#sub-writing .practice-subview').forEach(v => v.classList.remove('active'));
+      document.getElementById('wsub-' + this.dataset.wsub).classList.add('active');
+    });
+  });
+}
+
+// ═══════════════════ 工具 ═══════════════════
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
+
+// ═══════════════════ 词典弹窗 ═══════════════════
+const dictCache = {};
+
+document.addEventListener('dblclick', function(e) {
+  const selection = window.getSelection();
+  const word = (selection.toString().trim() || e.target.textContent?.match(/\b[a-zA-Z]{3,}\b/)?.[0]) || '';
+  if (word && word.length >= 3 && /^[a-zA-Z]+$/.test(word)) {
+    lookupWord(word.toLowerCase());
+  }
+});
+
+async function lookupWord(word) {
+  const overlay = document.getElementById('dictOverlay');
+  const content = document.getElementById('dictContent');
+  overlay.classList.add('show');
+  content.innerHTML = '<div class="dict-loading">查询中...<br><span style="font-size:.75rem;color:var(--c-faint)">正在连接词典服务</span></div>';
+
+  if (dictCache[word]) { renderDictResult(word, dictCache[word]); return; }
+
+  // 先查本地词汇表
+  const local = WORDS.find(w => w.en.toLowerCase() === word.toLowerCase());
+
+  // 尝试 Free Dictionary API（8秒超时）
+  let apiData = null;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const resp = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (resp.ok) { apiData = await resp.json(); dictCache[word] = apiData; }
+  } catch(e) { /* 超时或网络错误，继续尝试备用API */ }
+
+  // 备选API（不需要key的免费词典）
+  if (!apiData) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 6000);
+      const resp = await fetch(`https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=d&max=1`, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (resp.ok) {
+        const dm = await resp.json();
+        if (dm.length > 0 && dm[0].defs?.length) {
+          apiData = [{ word: word, meanings: dm[0].defs.map(d => {
+            const parts = d.split('\t');
+            return { partOfSpeech: parts[0] || 'n.', definitions: [{ definition: parts.slice(1).join(' ') }] };
+          }), source: 'datamuse' }];
+          dictCache[word] = apiData;
+        }
+      }
+    } catch(e) { /* 备用API也失败 */ }
+  }
+
+  if (apiData) {
+    renderDictResult(word, apiData);
+  } else if (local) {
+    // API全部失败，显示本地数据
+    content.innerHTML = `
+      <div class="dict-word">${local.en}</div>
+      <div class="dict-pos">${local.pos}</div>
+      <div class="dict-def" style="margin-top:12px">${local.zh}</div>
+      ${local.ex ? `<div class="dict-ex">${local.ex}</div>` : ''}
+      <p style="color:var(--c-dim);font-size:.7rem;margin-top:12px">离线模式 — 本地词汇表数据</p>
+      <button class="btn btn-gray" style="margin-top:8px" onclick="closeDict()">关闭</button>`;
+  } else {
+    content.innerHTML = `
+      <div class="dict-word">${word}</div>
+      <p style="color:var(--c-muted);margin-top:16px">词典服务暂时不可用，且该词不在本地词汇表中。</p>
+      <p style="color:var(--c-dim);font-size:.75rem">建议：检查网络连接后重试</p>
+      <button class="btn btn-blue" style="margin-top:12px" onclick="lookupWord('${word}')">重试</button>
+      <button class="btn btn-gray" style="margin-left:8px" onclick="closeDict()">关闭</button>`;
+  }
+}
+
+function renderDictResult(word, data) {
+  const entry = data[0];
+  const sourceLabel = entry.source === 'datamuse' ? 'Datamuse API' : 'Free Dictionary API';
+  const phonetic = entry.phonetics?.find(p => p.text) || entry.phonetics?.[0] || {};
+  const phoneticText = phonetic.text || '';
+  const audioUrl = phonetic.audio || '';
+
+  const meanings = entry.meanings?.map(m => `
+    <div style="margin:12px 0">
+      <span class="dict-pos">${m.partOfSpeech}</span>
+      ${m.definitions.slice(0, 4).map(d => `
+        <div class="dict-def">${d.definition}${d.example ? `<div class="dict-ex">"${d.example}"</div>` : ''}</div>
+      `).join('')}
+      ${m.synonyms?.length ? `<div class="dict-syn">同义词: ${m.synonyms.slice(0,8).map(s => `<span onclick="lookupWord('${s}')">${s}</span>`).join('')}</div>` : ''}
+    </div>
+  `).join('') || '<p style="color:var(--c-muted)">无详细释义</p>';
+
+  // 同时查找本地词汇表补充信息
+  const local = WORDS.find(w => w.en.toLowerCase() === word.toLowerCase());
+
+  document.getElementById('dictContent').innerHTML = `
+    <div class="dict-word">${entry.word || word}</div>
+    <div class="dict-phonetic">
+      ${phoneticText ? `<span>/${phoneticText}/</span>` : ''}
+      ${audioUrl ? `<button onclick="new Audio('${audioUrl}').play()" title="发音">🔊</button>` : ''}
+    </div>
+    ${meanings}
+    ${local ? `<div style="margin-top:16px;padding:12px;background:var(--c-bg-deep);border-radius:8px">
+      <p style="color:var(--c-accent);font-size:.75rem;font-weight:600;margin-bottom:4px">CET-6 学习要点</p>
+      <p style="color:var(--c-green)">释义：${local.zh}</p>
+      ${local.ex ? `<p style="color:var(--c-muted)">例句：${local.ex}</p>` : ''}
+    </div>` : ''}
+    <p style="color:var(--c-faint);font-size:.7rem;margin-top:16px">来源: ${sourceLabel} | 双击页面任意英文单词即可查词</p>
+    <button class="btn btn-gray" style="margin-top:8px" onclick="closeDict()">关闭</button>
+  `;
+}
+
+function closeDict() {
+  document.getElementById('dictOverlay').classList.remove('show');
+}
+
+// 键盘快捷键: ESC关闭词典/阅读器
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (document.getElementById('dictOverlay').classList.contains('show')) closeDict();
+    if (document.getElementById('readOverlay').classList.contains('show')) closeReader();
+  }
+});
+
+// 抽认卡键盘
+document.addEventListener('keydown', e => {
+  if (document.getElementById('dictOverlay').classList.contains('show')) return;
+  const v = document.querySelector('.view.active');
+  if (v && v.id === 'flashcard') {
+    if (e.key === 'ArrowRight') nextCard();
+    else if (e.key === 'ArrowLeft') prevCard();
+    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+    else if (e.key === 'r') randomCard();
+  }
+});
+
+// ═══════════════════ 主题切换 ═══════════════════
+const THEME_KEY = 'cet6_theme';
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeToggle').innerHTML = '🌙';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeToggle').innerHTML = '☀️';
+  }
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
+// ═══════════════════ PWA 注册 ═══════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered');
+      // 监听更新消息
+      navigator.serviceWorker.addEventListener('message', e => {
+        if (e.data?.type === 'update-available') {
+          document.getElementById('updateBanner')?.classList.add('show');
+        }
+      });
+    }).catch(() => {});
+  });
+}
+
+// ═══════════════════ 远程内容同步 ═══════════════════
+const REMOTE_API = localStorage.getItem('cet6_api_url') || '';
+
+async function syncRemoteContent() {
+  if (!REMOTE_API) return;
+  try {
+    const resp = await fetch(REMOTE_API + '/content-version.json', { cache: 'no-cache' });
+    if (!resp.ok) return;
+    const meta = await resp.json();
+    const localVer = localStorage.getItem('cet6_content_version');
+    if (meta.version === localVer) return;
+
+    // 拉取远程词汇
+    if (meta.files?.words) {
+      const wResp = await fetch(REMOTE_API + '/' + meta.files.words);
+      if (wResp.ok) {
+        const remoteWords = await wResp.json();
+        localStorage.setItem('cet6_remote_words', JSON.stringify(remoteWords));
+        mergeRemoteWords(remoteWords);
+      }
+    }
+    // 拉取远程文章
+    if (meta.files?.articles) {
+      const aResp = await fetch(REMOTE_API + '/' + meta.files.articles);
+      if (aResp.ok) {
+        const remoteArticles = await aResp.json();
+        localStorage.setItem('cet6_remote_articles', JSON.stringify(remoteArticles));
+        updateNewsArticles(remoteArticles);
+      }
+    }
+    localStorage.setItem('cet6_content_version', meta.version);
+  } catch(e) {}
+}
+
+function mergeRemoteWords(remoteWords) {
+  remoteWords.forEach(rw => {
+    const exists = WORDS.find(w => w.en === rw.en);
+    if (!exists) {
+      rw.id = WORDS.length + 1;
+      WORDS.push(rw);
+    }
+  });
+  updateStats(); renderWordList();
+}
+
+function updateNewsArticles(articles) {
+  const merged = [...articles, ...NEWS];
+  // 去重
+  const seen = new Set();
+  window._remoteNews = merged.filter(a => {
+    const key = a.title;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+// 启动时自动同步
+syncRemoteContent();
+
+// ═══════════════════ 初始化 ═══════════════════
+updateStats(); showCard(); renderWordList(); renderPhraseList(); renderNews(); renderReading(); renderCloze(); renderBankedCloze(); renderTranslation(); renderWriting();
+</script>
+</body>
+</html>

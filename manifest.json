@@ -1,0 +1,19 @@
+{
+  "name": "CET-6 英语学习助手",
+  "short_name": "六级助手",
+  "description": "CET-6备考一体化学练平台 - 词汇、词组、外刊、真题",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f172a'/><text x='50' y='65' text-anchor='middle' font-size='50' fill='%2338bdf8'>C6</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

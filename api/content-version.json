@@ -1,0 +1,10 @@
+{
+  "version": "2026-08-11-1",
+  "updated": "2026-08-11T12:00:00Z",
+  "files": {
+    "words": "words.json",
+    "articles": "articles.json",
+    "phrases": "phrases.json"
+  },
+  "changelog": "新增20个高频词汇，更新2篇外刊文章"
+}
