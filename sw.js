@@ -1,7 +1,7 @@
 const CACHE_NAME = 'cet6-v3';
 const ASSETS = [
   './',
-  './english-learner.html',
+  './index.html',
   './manifest.json'
 ];
 
