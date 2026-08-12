@@ -1243,33 +1243,228 @@ function updateStats() {
   `;
 }
 
-// ═══════════════════ 抽认卡 ═══════════════════
-const phonCache = {};
-function showCard() {
-  if (!filteredWords.length) { document.getElementById('fcWord').textContent='暂无单词'; document.getElementById('fcPos').textContent=''; return; }
-  if (cardIndex >= filteredWords.length) cardIndex = 0;
-  const w = filteredWords[cardIndex];
-  document.getElementById('fcWord').textContent = w.en;
-  // 音标
-  const phEl = document.getElementById('fcPhonetic');
-  const phBack = document.getElementById('fcPhoneticBack');
-  const phText = w.phonetic || phonCache[w.en] || '';
-  if (phText) {
-    phEl.textContent = '/' + phText + '/';
-    phBack.textContent = '/' + phText + '/';
-  } else {
-    phEl.textContent = '';
-    phBack.textContent = '';
-    fetchPhonetic(w);
-  }
-  const s = getSRS(w.id);
-  const stageLabels = ['🆕 新学', '📅 1天后复习', '📅 3天后', '📅 7天后', '📅 14天后', '📅 30天后', '✅ 掌握'];
-  const stageText = isKnown(w.id) ? (s.stage >= 6 ? stageLabels[6] : stageLabels[s.stage] || stageLabels[0]) : '';
-  document.getElementById('fcPos').textContent = w.pos + (stageText ? ' · ' + stageText : '');
-  document.getElementById('fcMeaning').textContent = w.zh;
-  document.getElementById('fcExample').textContent = w.ex;
-  document.getElementById('card').classList.remove('flipped');
-}
+// ═══════════════════ 音标引擎 ═══════════════════
+const phonCache = (() => { try { return JSON.parse(localStorage.getItem('cet6_phon')) || {}; } catch(e) { return {}; } })();
+function savePhonCache() { localStorage.setItem('cet6_phon', JSON.stringify(phonCache)); }
+
+const BUILTIN_PHON = {
+abandon:"əˈbændən",abstract:"ˈæbstrækt",abuse:"əˈbjuːs",academy:"əˈkædəmi",access:"ˈækses",
+accommodation:"əˌkɒməˈdeɪʃən",acknowledge:"əkˈnɒlɪdʒ",acquisition:"ˌækwɪˈzɪʃən",adaptation:"ˌædæpˈteɪʃən",
+adequate:"ˈædɪkwət",adjacent:"əˈdʒeɪsənt",adolescent:"ˌædəˈlesənt",adverse:"ˈædvɜːs",advocate:"ˈædvəkeɪt",
+agenda:"əˈdʒendə",aggressive:"əˈɡresɪv",allocate:"ˈæləkeɪt",alternative:"ɔːlˈtɜːnətɪv",ambiguous:"æmˈbɪɡjuəs",
+amendment:"əˈmendmənt",analogy:"əˈnælədʒi",annual:"ˈænjuəl",anticipate:"ænˈtɪsɪpeɪt",apparent:"əˈpærənt",
+appreciate:"əˈpriːʃieɪt",approach:"əˈprəʊtʃ",arbitrary:"ˈɑːbɪtrəri",assess:"əˈses",assign:"əˈsaɪn",
+assumption:"əˈsʌmpʃən",atmosphere:"ˈætməsfɪə",attribute:"əˈtrɪbjuːt",authority:"ɔːˈθɒrəti",available:"əˈveɪləbəl",
+barrier:"ˈbæriə",budget:"ˈbʌdʒɪt",capacity:"kəˈpæsəti",category:"ˈkætəɡəri",characteristic:"ˌkærəktəˈrɪstɪk",
+circumstance:"ˈsɜːkəmstæns",colleague:"ˈkɒliːɡ",commission:"kəˈmɪʃən",commitment:"kəˈmɪtmənt",community:"kəˈmjuːnəti",
+compensation:"ˌkɒmpenˈseɪʃən",component:"kəmˈpəʊnənt",concentration:"ˌkɒnsənˈtreɪʃən",concept:"ˈkɒnsept",
+conflict:"ˈkɒnflɪkt",consequence:"ˈkɒnsɪkwəns",conservation:"ˌkɒnsəˈveɪʃən",consistent:"kənˈsɪstənt",
+constitution:"ˌkɒnstɪˈtjuːʃən",consumption:"kənˈsʌmpʃən",contemporary:"kənˈtempərəri",controversy:"ˈkɒntrəvɜːsi",
+convention:"kənˈvenʃən",coordinate:"kəʊˈɔːdɪneɪt",corporation:"ˌkɔːpəˈreɪʃən",correspond:"ˌkɒrɪˈspɒnd",
+demonstrate:"ˈdemənstreɪt",deny:"dɪˈnaɪ",derive:"dɪˈraɪv",detect:"dɪˈtekt",deteriorate:"dɪˈtɪəriəreɪt",
+devise:"dɪˈvaɪz",devote:"dɪˈvəʊt",discipline:"ˈdɪsɪplɪn",discount:"ˈdɪskaʊnt",display:"dɪˈspleɪ",
+dispose:"dɪˈspəʊz",distinctive:"dɪˈstɪŋktɪv",distinguish:"dɪˈstɪŋɡwɪʃ",distribution:"ˌdɪstrɪˈbjuːʃən",
+diversity:"daɪˈvɜːsəti",domestic:"dəˈmestɪk",dominate:"ˈdɒmɪneɪt",draft:"drɑːft",dramatic:"drəˈmætɪk",
+duration:"djʊˈreɪʃən",dynamic:"daɪˈnæmɪk",elaborate:"ɪˈlæbərət",eliminate:"ɪˈlɪmɪneɪt",emerge:"ɪˈmɜːdʒ",
+emphasis:"ˈemfəsɪs",enable:"ɪˈneɪbəl",enforce:"ɪnˈfɔːs",enhance:"ɪnˈhɑːns",enormous:"ɪˈnɔːməs",
+ensure:"ɪnˈʃʊə",enterprise:"ˈentəpraɪz",enthusiasm:"ɪnˈθjuːziæzəm",equivalent:"ɪˈkwɪvələnt",establish:"ɪˈstæblɪʃ",
+evaluate:"ɪˈvæljueɪt",evolution:"ˌiːvəˈluːʃən",exceed:"ɪkˈsiːd",exclusive:"ɪkˈskluːsɪv",executive:"ɪɡˈzekjʊtɪv",
+exploit:"ɪkˈsplɔɪt",external:"ɪkˈstɜːnəl",facilitate:"fəˈsɪlɪteɪt",facility:"fəˈsɪləti",federal:"ˈfedərəl",
+flexible:"ˈfleksɪbəl",fluctuate:"ˈflʌktʃueɪt",format:"ˈfɔːmæt",formula:"ˈfɔːmjʊlə",foundation:"faʊnˈdeɪʃən",
+generate:"ˈdʒenəreɪt",guarantee:"ˌɡærənˈtiː",identical:"aɪˈdentɪkəl",illustrate:"ˈɪləstreɪt",immigrant:"ˈɪmɪɡrənt",
+implement:"ˈɪmplɪmənt",implication:"ˌɪmplɪˈkeɪʃən",impose:"ɪmˈpəʊz",incentive:"ɪnˈsentɪv",incorporate:"ɪnˈkɔːpəreɪt",
+indicate:"ˈɪndɪkeɪt",individual:"ˌɪndɪˈvɪdʒuəl",inevitable:"ɪˈnevɪtəbəl",infrastructure:"ˈɪnfrəstrʌktʃə",
+inherent:"ɪnˈhɪərənt",initiative:"ɪˈnɪʃətɪv",innovation:"ˌɪnəˈveɪʃən",insight:"ˈɪnsaɪt",institution:"ˌɪnstɪˈtjuːʃən",
+integrate:"ˈɪntɪɡreɪt",intellectual:"ˌɪntɪˈlektʃuəl",intelligence:"ɪnˈtelɪdʒəns",intense:"ɪnˈtens",
+interpretation:"ɪnˌtɜːprɪˈteɪʃən",intervene:"ˌɪntəˈviːn",investment:"ɪnˈvestmənt",involve:"ɪnˈvɒlv",
+isolate:"ˈaɪsəleɪt",justify:"ˈdʒʌstɪfaɪ",landscape:"ˈlændskeɪp",launch:"lɔːntʃ",legislation:"ˌledʒɪsˈleɪʃən",
+liberal:"ˈlɪbərəl",likewise:"ˈlaɪkwaɪz",literature:"ˈlɪtərətʃə",logical:"ˈlɒdʒɪkəl",maintain:"meɪnˈteɪn",
+manipulate:"məˈnɪpjʊleɪt",mechanism:"ˈmekənɪzəm",media:"ˈmiːdiə",migrate:"maɪˈɡreɪt",military:"ˈmɪlɪtəri",
+minimum:"ˈmɪnɪməm",minority:"maɪˈnɒrəti",monitor:"ˈmɒnɪtə",motivate:"ˈməʊtɪveɪt",mutual:"ˈmjuːtʃuəl",
+negative:"ˈneɡətɪv",negotiate:"nɪˈɡəʊʃieɪt",network:"ˈnetwɜːk",nevertheless:"ˌnevəðəˈles",
+objective:"əbˈdʒektɪv",obligation:"ˌɒblɪˈɡeɪʃən",obstacle:"ˈɒbstəkəl",occupation:"ˌɒkjʊˈpeɪʃən",
+offensive:"əˈfensɪv",opponent:"əˈpəʊnənt",opportunity:"ˌɒpəˈtjuːnəti",oppose:"əˈpəʊz",optimistic:"ˌɒptɪˈmɪstɪk",
+option:"ˈɒpʃən",orientation:"ˌɔːriənˈteɪʃən",outcome:"ˈaʊtkʌm",overcome:"ˌəʊvəˈkʌm",
+overlook:"ˌəʊvəˈlʊk",overseas:"ˌəʊvəˈsiːz",overwhelm:"ˌəʊvəˈwelm",paradox:"ˈpærədɒks",participate:"pɑːˈtɪsɪpeɪt",
+passion:"ˈpæʃən",passive:"ˈpæsɪv",patent:"ˈpeɪtənt",perceive:"pəˈsiːv",permanent:"ˈpɜːmənənt",
+persist:"pəˈsɪst",perspective:"pəˈspektɪv",phenomenon:"fɪˈnɒmɪnən",philosophy:"fɪˈlɒsəfi",policy:"ˈpɒləsi",
+portion:"ˈpɔːʃən",potential:"pəˈtenʃəl",poverty:"ˈpɒvəti",precede:"prɪˈsiːd",predict:"prɪˈdɪkt",
+prejudice:"ˈpredʒʊdɪs",preserve:"prɪˈzɜːv",pressure:"ˈpreʃə",prevail:"prɪˈveɪl",previous:"ˈpriːviəs",
+principal:"ˈprɪnsɪpəl",principle:"ˈprɪnsɪpəl",priority:"praɪˈɒrəti",privilege:"ˈprɪvɪlɪdʒ",procedure:"prəˈsiːdʒə",
+proceed:"prəˈsiːd",profession:"prəˈfeʃən",profound:"prəˈfaʊnd",prohibit:"prəˈhɪbɪt",prominent:"ˈprɒmɪnənt",
+promote:"prəˈməʊt",proportion:"prəˈpɔːʃən",proposal:"prəˈpəʊzəl",prospect:"ˈprɒspekt",prosperity:"prɒˈsperəti",
+protest:"ˈprəʊtest",provoke:"prəˈvəʊk",purchase:"ˈpɜːtʃəs",pursue:"pəˈsjuː",radical:"ˈrædɪkəl",
+random:"ˈrændəm",range:"reɪndʒ",ratio:"ˈreɪʃiəʊ",rational:"ˈræʃənəl",realm:"relm",
+recession:"rɪˈseʃən",recognition:"ˌrekəɡˈnɪʃən",recommend:"ˌrekəˈmend",reconcile:"ˈrekənsaɪl",recovery:"rɪˈkʌvəri",
+reduction:"rɪˈdʌkʃən",reflection:"rɪˈflekʃən",reform:"rɪˈfɔːm",register:"ˈredʒɪstə",regulate:"ˈreɡjʊleɪt",
+reinforce:"ˌriːɪnˈfɔːs",reject:"rɪˈdʒekt",release:"rɪˈliːs",relevant:"ˈreləvənt",relief:"rɪˈliːf",
+reluctant:"rɪˈlʌktənt",rely:"rɪˈlaɪ",remedy:"ˈremədi",remote:"rɪˈməʊt",render:"ˈrendə",
+replace:"rɪˈpleɪs",represent:"ˌreprɪˈzent",reputation:"ˌrepjʊˈteɪʃən",resemble:"rɪˈzembəl",reserve:"rɪˈzɜːv",
+resist:"rɪˈzɪst",resolution:"ˌrezəˈluːʃən",resolve:"rɪˈzɒlv",resource:"rɪˈzɔːs",respond:"rɪˈspɒnd",
+restore:"rɪˈstɔː",restrain:"rɪˈstreɪn",restrict:"rɪˈstrɪkt",retain:"rɪˈteɪn",reveal:"rɪˈviːl",
+revenue:"ˈrevɪnjuː",reverse:"rɪˈvɜːs",revolution:"ˌrevəˈluːʃən",reward:"rɪˈwɔːd",rigid:"ˈrɪdʒɪd",
+rival:"ˈraɪvəl",routine:"ruːˈtiːn",sacrifice:"ˈsækrɪfaɪs",scale:"skeɪl",schedule:"ˈʃedjuːl",
+scope:"skəʊp",security:"sɪˈkjʊərəti",sensitive:"ˈsensɪtɪv",severe:"sɪˈvɪə",shift:"ʃɪft",
+shortage:"ˈʃɔːtɪdʒ",signal:"ˈsɪɡnəl",significance:"sɪɡˈnɪfɪkəns",simplify:"ˈsɪmplɪfaɪ",skeptical:"ˈskeptɪkəl",
+source:"sɔːs",span:"spæn",sponsor:"ˈspɒnsə",stability:"stəˈbɪləti",status:"ˈsteɪtəs",
+steady:"ˈstedi",stimulate:"ˈstɪmjʊleɪt",strategy:"ˈstrætədʒi",stress:"stres",strive:"straɪv",
+structure:"ˈstrʌktʃə",submit:"səbˈmɪt",subsequent:"ˈsʌbsɪkwənt",subsidy:"ˈsʌbsɪdi",substantial:"səbˈstænʃəl",
+substitute:"ˈsʌbstɪtjuːt",sufficient:"səˈfɪʃənt",summit:"ˈsʌmɪt",supervise:"ˈsuːpəvaɪz",supplement:"ˈsʌplɪmənt",
+suppress:"səˈpres",supreme:"suːˈpriːm",surplus:"ˈsɜːpləs",survey:"ˈsɜːveɪ",survive:"səˈvaɪv",
+suspect:"səˈspekt",suspend:"səˈspend",suspicion:"səˈspɪʃən",sustain:"səˈsteɪn",symbol:"ˈsɪmbəl",
+sympathy:"ˈsɪmpəθi",symptom:"ˈsɪmptəm",tackle:"ˈtækəl",target:"ˈtɑːɡɪt",technique:"tekˈniːk",
+temporary:"ˈtempərəri",tendency:"ˈtendənsi",territory:"ˈterɪtəri",thorough:"ˈθʌrə",threat:"θret",
+thrive:"θraɪv",tolerate:"ˈtɒləreɪt",tradition:"trəˈdɪʃən",transfer:"trænsˈfɜː",transform:"trænsˈfɔːm",
+transition:"trænˈzɪʃən",transmission:"trænzˈmɪʃən",transparent:"trænsˈpærənt",transport:"ˈtrænspɔːt",
+tremendous:"trɪˈmendəs",trend:"trend",trigger:"ˈtrɪɡə",ultimate:"ˈʌltɪmət",undergo:"ˌʌndəˈɡəʊ",
+undermine:"ˌʌndəˈmaɪn",undertake:"ˌʌndəˈteɪk",unemployment:"ˌʌnɪmˈplɔɪmənt",unique:"juːˈniːk",
+universal:"ˌjuːnɪˈvɜːsəl",urban:"ˈɜːbən",utilize:"ˈjuːtɪlaɪz",valid:"ˈvælɪd",variety:"vəˈraɪəti",
+verify:"ˈverɪfaɪ",version:"ˈvɜːʃən",via:"ˈvaɪə",victim:"ˈvɪktɪm",vigorous:"ˈvɪɡərəs",
+violate:"ˈvaɪəleɪt",virtual:"ˈvɜːtʃuəl",virtue:"ˈvɜːtʃuː",vision:"ˈvɪʒən",visual:"ˈvɪʒuəl",
+vital:"ˈvaɪtəl",vivid:"ˈvɪvɪd",volume:"ˈvɒljuːm",voluntary:"ˈvɒləntəri",vulnerable:"ˈvʌlnərəbəl",
+welfare:"ˈwelfeə",whereas:"weərˈæz",widespread:"ˈwaɪdspred",withdraw:"wɪðˈdrɔː",withstand:"wɪðˈstænd",
+witness:"ˈwɪtnəs",yield:"jiːld",accelerate:"əkˈseləreɪt",accessible:"əkˈsesɪbəl",accompany:"əˈkʌmpəni",
+accomplish:"əˈkʌmplɪʃ",accumulate:"əˈkjuːmjʊleɪt",accuracy:"ˈækjʊrəsi",accuse:"əˈkjuːz",achieve:"əˈtʃiːv",
+acute:"əˈkjuːt",adhere:"ədˈhɪə",adjust:"əˈdʒʌst",adopt:"əˈdɒpt",aggravate:"ˈæɡrəveɪt",
+alleviate:"əˈliːvieɪt",alliance:"əˈlaɪəns",alter:"ˈɔːltə",altitude:"ˈæltɪtjuːd",ambitious:"æmˈbɪʃəs",
+amend:"əˈmend",ample:"ˈæmpəl",anonymous:"əˈnɒnɪməs",appetite:"ˈæpɪtaɪt",appoint:"əˈpɔɪnt",
+arouse:"əˈraʊz",artificial:"ˌɑːtɪˈfɪʃəl",assault:"əˈsɔːlt",assemble:"əˈsembəl",assert:"əˈsɜːt",
+asset:"ˈæset",associate:"əˈsəʊʃieɪt",assume:"əˈsjuːm",assure:"əˈʃʊə",attain:"əˈteɪn",
+authentic:"ɔːˈθentɪk",authorize:"ˈɔːθəraɪz",autonomy:"ɔːˈtɒnəmi",awareness:"əˈweənəs",bankruptcy:"ˈbæŋkrʌptsi",
+betray:"bɪˈtreɪ",bilateral:"baɪˈlætərəl",bizarre:"bɪˈzɑː",boom:"buːm",boycott:"ˈbɔɪkɒt",
+breach:"briːtʃ",broaden:"ˈbrɔːdən",bubble:"ˈbʌbəl",catalyst:"ˈkætəlɪst",cognitive:"ˈkɒɡnɪtɪv",
+commodity:"kəˈmɒdəti",compensate:"ˈkɒmpenseɪt",compile:"kəmˈpaɪl",comply:"kəmˈplaɪ",compose:"kəmˈpəʊz",
+comprehend:"ˌkɒmprɪˈhend",comprise:"kəmˈpraɪz",conceive:"kənˈsiːv",condemn:"kənˈdem",confer:"kənˈfɜː",
+confine:"kənˈfaɪn",conform:"kənˈfɔːm",confront:"kənˈfrʌnt",conscience:"ˈkɒnʃəns",consolidate:"kənˈsɒlɪdeɪt",
+conspicuous:"kənˈspɪkjuəs",constitute:"ˈkɒnstɪtjuːt",constrain:"kənˈstreɪn",contemplate:"ˈkɒntəmpleɪt",
+contend:"kənˈtend",contradict:"ˌkɒntrəˈdɪkt",convene:"kənˈviːn",converge:"kənˈvɜːdʒ",convey:"kənˈveɪ",
+conviction:"kənˈvɪkʃən",correlate:"ˈkɒrəleɪt",corrode:"kəˈrəʊd",counsel:"ˈkaʊnsəl",counterpart:"ˈkaʊntəpɑːt",
+courtesy:"ˈkɜːtəsi",criterion:"kraɪˈtɪəriən",crucial:"ˈkruːʃəl",culminate:"ˈkʌlmɪneɪt",cultivate:"ˈkʌltɪveɪt",
+cumulative:"ˈkjuːmjʊlətɪv",curriculum:"kəˈrɪkjʊləm",deadline:"ˈdedlaɪn",decay:"dɪˈkeɪ",deceive:"dɪˈsiːv",
+decline:"dɪˈklaɪn",dedicate:"ˈdedɪkeɪt",deficiency:"dɪˈfɪʃənsi",defy:"dɪˈfaɪ",delegate:"ˈdelɪɡeɪt",
+deliberate:"dɪˈlɪbərət",delicate:"ˈdelɪkət",demolish:"dɪˈmɒlɪʃ",depict:"dɪˈpɪkt",deploy:"dɪˈplɔɪ",
+depress:"dɪˈpres",deprive:"dɪˈpraɪv",descend:"dɪˈsend",designate:"ˈdezɪɡneɪt",despise:"dɪˈspaɪz",
+detain:"dɪˈteɪn",deviate:"ˈdiːvieɪt",diagnose:"ˈdaɪəɡnəʊz",differentiate:"ˌdɪfəˈrenʃieɪt",diffuse:"dɪˈfjuːz",
+dilemma:"dɪˈlemə",dilute:"daɪˈluːt",diminish:"dɪˈmɪnɪʃ",diploma:"dɪˈpləʊmə",disclose:"dɪsˈkləʊz",
+discourse:"ˈdɪskɔːs",discrepancy:"dɪsˈkrepənsi",dispatch:"dɪˈspætʃ",disperse:"dɪˈspɜːs",displace:"dɪsˈpleɪs",
+disposal:"dɪˈspəʊzəl",disregard:"ˌdɪsrɪˈɡɑːd",disrupt:"dɪsˈrʌpt",dissolve:"dɪˈzɒlv",distort:"dɪˈstɔːt",
+distract:"dɪˈstrækt",doctrine:"ˈdɒktrɪn",domain:"dəˈmeɪn",donate:"dəʊˈneɪt",drastic:"ˈdræstɪk",
+drawback:"ˈdrɔːbæk",drought:"draʊt",dwell:"dwel",eclipse:"ɪˈklɪps",ecology:"iːˈkɒlədʒi",
+eject:"ɪˈdʒekt",elapse:"ɪˈlæps",elevate:"ˈelɪveɪt",elicit:"ɪˈlɪsɪt",eligible:"ˈelɪdʒɪbəl",
+embark:"ɪmˈbɑːk",embed:"ɪmˈbed",embody:"ɪmˈbɒdi",emigrate:"ˈemɪɡreɪt",empirical:"ɪmˈpɪrɪkəl",
+enclosure:"ɪnˈkləʊʒə",endeavor:"ɪnˈdevə",endow:"ɪnˈdaʊ",enlighten:"ɪnˈlaɪtən",enrich:"ɪnˈrɪtʃ",
+enroll:"ɪnˈrəʊl",ensue:"ɪnˈsjuː",entail:"ɪnˈteɪl",entity:"ˈentəti",entrepreneur:"ˌɒntrəprəˈnɜː",
+envisage:"ɪnˈvɪzɪdʒ",epidemic:"ˌepɪˈdemɪk",epoch:"ˈiːpɒk",equity:"ˈekwəti",erode:"ɪˈrəʊd",
+erroneous:"ɪˈrəʊniəs",erupt:"ɪˈrʌpt",essence:"ˈesəns",esteem:"ɪˈstiːm",evoke:"ɪˈvəʊk",
+exempt:"ɪɡˈzempt",exert:"ɪɡˈzɜːt",exile:"ˈeksaɪl",expedition:"ˌekspɪˈdɪʃən",expire:"ɪkˈspaɪə",
+explicit:"ɪkˈsplɪsɪt",exquisite:"ɪkˈskwɪzɪt",extinct:"ɪkˈstɪŋkt",extract:"ɪkˈstrækt",fabricate:"ˈfæbrɪkeɪt",
+facet:"ˈfæsɪt",feasible:"ˈfiːzəbəl",feeble:"ˈfiːbəl",finite:"ˈfaɪnaɪt",flaw:"flɔː",
+forthcoming:"ˌfɔːθˈkʌmɪŋ",foster:"ˈfɒstə",fragile:"ˈfrædʒaɪl",friction:"ˈfrɪkʃən",furious:"ˈfjʊəriəs",
+fusion:"ˈfjuːʒən",gigantic:"dʒaɪˈɡæntɪk",glamour:"ˈɡlæmə",gloomy:"ˈɡluːmi",gracious:"ˈɡreɪʃəs",
+hamper:"ˈhæmpə",handicap:"ˈhændikæp",harass:"ˈhærəs",harsh:"hɑːʃ",haunt:"hɔːnt",
+heighten:"ˈhaɪtən",hemisphere:"ˈhemɪsfɪə",hinder:"ˈhɪndə",homogeneous:"ˌhɒməˈdʒiːniəs",hospitality:"ˌhɒspɪˈtæləti",
+hostile:"ˈhɒstaɪl",humanity:"hjuːˈmænəti",hypothesis:"haɪˈpɒθəsɪs",ignite:"ɪɡˈnaɪt",illuminate:"ɪˈluːmɪneɪt",
+immerse:"ɪˈmɜːs",immune:"ɪˈmjuːn",impair:"ɪmˈpeə",impart:"ɪmˈpɑːt",impetus:"ˈɪmpɪtəs",
+implicit:"ɪmˈplɪsɪt",impulse:"ˈɪmpʌls",inaugurate:"ɪˈnɔːɡjʊreɪt",incline:"ɪnˈklaɪn",incur:"ɪnˈkɜː",
+indignant:"ɪnˈdɪɡnənt",indispensable:"ˌɪndɪˈspensəbəl",induce:"ɪnˈdjuːs",indulge:"ɪnˈdʌldʒ",infectious:"ɪnˈfekʃəs",
+infer:"ɪnˈfɜː",inflation:"ɪnˈfleɪʃən",inflict:"ɪnˈflɪkt",ingenious:"ɪnˈdʒiːniəs",inhabit:"ɪnˈhæbɪt",
+inhibit:"ɪnˈhɪbɪt",initiate:"ɪˈnɪʃieɪt",inject:"ɪnˈdʒekt",innocent:"ˈɪnəsənt",innumerable:"ɪˈnjuːmərəbəl",
+insane:"ɪnˈseɪn",insert:"ɪnˈsɜːt",instantaneous:"ˌɪnstənˈteɪniəs",instrumental:"ˌɪnstrʊˈmentəl",
+insulate:"ˈɪnsjʊleɪt",intact:"ɪnˈtækt",integral:"ˈɪntɪɡrəl",integrity:"ɪnˈteɡrəti",interim:"ˈɪntərɪm",
+intermittent:"ˌɪntəˈmɪtənt",intersection:"ˌɪntəˈsekʃən",intricate:"ˈɪntrɪkət",intrinsic:"ɪnˈtrɪnsɪk",
+intuition:"ˌɪntjuˈɪʃən",invalid:"ɪnˈvælɪd",invaluable:"ɪnˈvæljuəbəl",invariably:"ɪnˈveəriəbli",invert:"ɪnˈvɜːt",
+irrespective:"ˌɪrɪˈspektɪv",irrigation:"ˌɪrɪˈɡeɪʃən",irritate:"ˈɪrɪteɪt",jeopardize:"ˈdʒepədaɪz",junction:"ˈdʒʌŋkʃən",
+justification:"ˌdʒʌstɪfɪˈkeɪʃən",kidnap:"ˈkɪdnæp",knit:"nɪt",latent:"ˈleɪtənt",latitude:"ˈlætɪtjuːd",
+layman:"ˈleɪmən",leaflet:"ˈliːflɪt",legitimate:"lɪˈdʒɪtɪmət",liability:"ˌlaɪəˈbɪləti",likelihood:"ˈlaɪklihʊd",
+linger:"ˈlɪŋɡə",literacy:"ˈlɪtərəsi",literal:"ˈlɪtərəl",lobby:"ˈlɒbi",locomotive:"ˌləʊkəˈməʊtɪv",
+loom:"luːm",lounge:"laʊndʒ",lubricate:"ˈluːbrɪkeɪt",luminous:"ˈluːmɪnəs",magnify:"ˈmæɡnɪfaɪ",
+manifest:"ˈmænɪfest",manuscript:"ˈmænjʊskrɪpt",marginal:"ˈmɑːdʒɪnəl",massive:"ˈmæsɪv",masterpiece:"ˈmɑːstəpiːs",
+mediate:"ˈmiːdieɪt",menace:"ˈmenəs",mercy:"ˈmɜːsi",merge:"mɜːdʒ",metropolitan:"ˌmetrəˈpɒlɪtən",
+migraine:"ˈmiːɡreɪn",mingle:"ˈmɪŋɡəl",miniature:"ˈmɪnɪətʃə",minimize:"ˈmɪnɪmaɪz",misery:"ˈmɪzəri",
+misfortune:"mɪsˈfɔːtʃuːn",mobilize:"ˈməʊbɪlaɪz",modify:"ˈmɒdɪfaɪ",momentum:"məˈmentəm",monopoly:"məˈnɒpəli",
+morality:"məˈræləti",mortal:"ˈmɔːtəl",multitude:"ˈmʌltɪtjuːd",municipal:"mjuːˈnɪsɪpəl",murmur:"ˈmɜːmə",
+myth:"mɪθ",nasty:"ˈnɑːsti",negligible:"ˈneɡlɪdʒɪbəl",nominate:"ˈnɒmɪneɪt",nonetheless:"ˌnʌnðəˈles",
+norm:"nɔːm",notable:"ˈnəʊtəbəl",notify:"ˈnəʊtɪfaɪ",notion:"ˈnəʊʃən",notorious:"nəʊˈtɔːriəs",
+nourish:"ˈnʌrɪʃ",novelty:"ˈnɒvəlti",nurture:"ˈnɜːtʃə",nutrition:"njuːˈtrɪʃən",obedient:"əˈbiːdiənt",
+obscure:"əbˈskjʊə",odds:"ɒdz",offset:"ˈɒfset",opaque:"əʊˈpeɪk",optimum:"ˈɒptɪməm",
+ordeal:"ɔːˈdiːl",orient:"ˈɔːrient",originate:"əˈrɪdʒɪneɪt",ornament:"ˈɔːnəmənt",orthodox:"ˈɔːθədɒks",
+outbreak:"ˈaʊtbreɪk",overflow:"ˌəʊvəˈfləʊ",overlap:"ˌəʊvəˈlæp",overt:"əʊˈvɜːt",overthrow:"ˌəʊvəˈθrəʊ",
+pamphlet:"ˈpæmflɪt",paralyze:"ˈpærəlaɪz",parameter:"pəˈræmɪtə",pathetic:"pəˈθetɪk",patrol:"pəˈtrəʊl",
+patron:"ˈpeɪtrən",pedestrian:"pɪˈdestriən",peer:"pɪə",penalty:"ˈpenəlti",pendulum:"ˈpendjʊləm",
+pension:"ˈpenʃən",perfection:"pəˈfekʃən",perfume:"ˈpɜːfjuːm",periodic:"ˌpɪəriˈɒdɪk",perish:"ˈperɪʃ",
+permeate:"ˈpɜːmieɪt",permissible:"pəˈmɪsɪbəl",perpetual:"pəˈpetʃuəl",perplex:"pəˈpleks",persistent:"pəˈsɪstənt",
+petition:"pɪˈtɪʃən",petty:"ˈpeti",pirate:"ˈpaɪrət",plague:"pleɪɡ",plausible:"ˈplɔːzɪbəl",
+plea:"pliː",plead:"pliːd",plight:"plaɪt",plunge:"plʌndʒ",poignant:"ˈpɔɪnjənt",
+poke:"pəʊk",polar:"ˈpəʊlə",ponder:"ˈpɒndə",portray:"pɔːˈtreɪ",posture:"ˈpɒstʃə",
+practicable:"ˈpræktɪkəbəl",preach:"priːtʃ",precede:"prɪˈsiːd",precipitate:"prɪˈsɪpɪteɪt",preclude:"prɪˈkluːd",
+predecessor:"ˈpriːdɪsesə",predominant:"prɪˈdɒmɪnənt",premature:"ˈpremətʃə",premise:"ˈpremɪs",premium:"ˈpriːmiəm",
+prescription:"prɪˈskrɪpʃən",preside:"prɪˈzaɪd",prestige:"presˈtiːʒ",presume:"prɪˈzjuːm",pretext:"ˈpriːtekst",
+prevalent:"ˈprevələnt",prey:"preɪ",probe:"prəʊb",proceeding:"prəˈsiːdɪŋ",proclaim:"prəˈkleɪm",
+productive:"prəˈdʌktɪv",proficiency:"prəˈfɪʃənsi",profitable:"ˈprɒfɪtəbəl",progressive:"prəˈɡresɪv",prolong:"prəˈlɒŋ",
+promising:"ˈprɒmɪsɪŋ",prone:"prəʊn",propaganda:"ˌprɒpəˈɡændə",propel:"prəˈpel",prophet:"ˈprɒfɪt",
+proposition:"ˌprɒpəˈzɪʃən",prose:"prəʊz",prosecute:"ˈprɒsɪkjuːt",prospective:"prəˈspektɪv",prototype:"ˈprəʊtətaɪp",
+provocative:"prəˈvɒkətɪv",proximity:"prɒkˈsɪməti",prune:"pruːn",psychiatry:"saɪˈkaɪətri",pumpkin:"ˈpʌmpkɪn",
+purify:"ˈpjʊərɪfaɪ",pursuit:"pəˈsjuːt",qualitative:"ˈkwɒlɪtətɪv",quantify:"ˈkwɒntɪfaɪ",quantitative:"ˈkwɒntɪtətɪv",
+quartz:"kwɔːts",quest:"kwest",questionnaire:"ˌkwestʃəˈneə",quota:"ˈkwəʊtə",racket:"ˈrækɪt",
+radiate:"ˈreɪdieɪt",raid:"reɪd",rally:"ˈræli",rating:"ˈreɪtɪŋ",readily:"ˈredɪli",
+realistic:"ˌrɪəˈlɪstɪk",reap:"riːp",reassure:"ˌriːəˈʃʊə",rebellion:"rɪˈbeljən",recede:"rɪˈsiːd",
+recipe:"ˈresɪpi",recipient:"rɪˈsɪpiənt",reciprocal:"rɪˈsɪprəkəl",recite:"rɪˈsaɪt",reckless:"ˈrekləs",
+reckon:"ˈrekən",reclaim:"rɪˈkleɪm",reconcile:"ˈrekənsaɪl",recreation:"ˌrekriˈeɪʃən",rectify:"ˈrektɪfaɪ",
+recur:"rɪˈkɜː",redundant:"rɪˈdʌndənt",referee:"ˌrefəˈriː",refrain:"rɪˈfreɪn",refreshment:"rɪˈfreʃmənt",
+refuge:"ˈrefjuːdʒ",refund:"ˈriːfʌnd",refute:"rɪˈfjuːt",regime:"reɪˈʒiːm",rehearsal:"rɪˈhɜːsəl",
+reign:"reɪn",rein:"reɪn",rejoice:"rɪˈdʒɔɪs",relay:"ˈriːleɪ",reliance:"rɪˈlaɪəns",
+remainder:"rɪˈmeɪndə",remnant:"ˈremnənt",renaissance:"rɪˈneɪsəns",repay:"rɪˈpeɪ",repel:"rɪˈpel",
+repertoire:"ˈrepətwɑː",repression:"rɪˈpreʃən",reproach:"rɪˈprəʊtʃ",resemblance:"rɪˈzembləns",resent:"rɪˈzent",
+reservation:"ˌrezəˈveɪʃən",reside:"rɪˈzaɪd",resign:"rɪˈzaɪn",resonance:"ˈrezənəns",respective:"rɪˈspektɪv",
+retort:"rɪˈtɔːt",retrieve:"rɪˈtriːv",retrospect:"ˈretrəspekt",revelation:"ˌrevəˈleɪʃən",revenge:"rɪˈvendʒ",
+revive:"rɪˈvaɪv",revolve:"rɪˈvɒlv",rigorous:"ˈrɪɡərəs",rim:"rɪm",rip:"rɪp",
+ritual:"ˈrɪtʃuəl",robust:"rəʊˈbʌst",rotate:"rəʊˈteɪt",rupture:"ˈrʌptʃə",safeguard:"ˈseɪfɡɑːd",
+salute:"səˈluːt",sanction:"ˈsæŋkʃən",saturate:"ˈsætʃəreɪt",savage:"ˈsævɪdʒ",scandal:"ˈskændəl",
+scatter:"ˈskætə",sceptical:"ˈskeptɪkəl",scorn:"skɔːn",scrap:"skræp",scrutiny:"ˈskruːtɪni",
+sculpture:"ˈskʌlptʃə",seam:"siːm",sector:"ˈsektə",seemingly:"ˈsiːmɪŋli",segment:"ˈseɡmənt",
+segregate:"ˈseɡrɪɡeɪt",seminar:"ˈsemɪnɑː",sensation:"senˈseɪʃən",sentiment:"ˈsentɪmənt",setback:"ˈsetbæk",
+shatter:"ˈʃætə",sheer:"ʃɪə",shrewd:"ʃruːd",shrug:"ʃrʌɡ",shuttle:"ˈʃʌtəl",
+siege:"siːdʒ",signify:"ˈsɪɡnɪfaɪ",simulate:"ˈsɪmjʊleɪt",simultaneous:"ˌsɪməlˈteɪniəs",sip:"sɪp",
+situated:"ˈsɪtʃueɪtɪd",skeleton:"ˈskelɪtən",skip:"skɪp",slack:"slæk",slash:"slæʃ",
+slaughter:"ˈslɔːtə",slim:"slɪm",slot:"slɒt",slump:"slʌmp",smuggle:"ˈsmʌɡəl",
+snatch:"snætʃ",soar:"sɔː",sober:"ˈsəʊbə",solicitor:"səˈlɪsɪtə",solidarity:"ˌsɒlɪˈdærəti",
+solitary:"ˈsɒlɪtəri",sovereign:"ˈsɒvrɪn",spacious:"ˈspeɪʃəs",sparkle:"ˈspɑːkəl",specialty:"ˈspeʃəlti",
+specification:"ˌspesɪfɪˈkeɪʃən",spectacle:"ˈspektəkəl",spectator:"spekˈteɪtə",spectrum:"ˈspektrəm",speculate:"ˈspekjʊleɪt",
+spiral:"ˈspaɪərəl",splash:"splæʃ",spokesman:"ˈspəʊksmən",spontaneous:"spɒnˈteɪniəs",spouse:"spaʊs",
+sprinkle:"ˈsprɪŋkəl",stab:"stæb",stabilize:"ˈsteɪbɪlaɪz",stagger:"ˈstæɡə",staircase:"ˈsteəkeɪs",
+stalk:"stɔːk",stall:"stɔːl",standpoint:"ˈstændpɔɪnt",staple:"ˈsteɪpəl",startle:"ˈstɑːtəl",
+stationary:"ˈsteɪʃənəri",stereotype:"ˈsteriətaɪp",stern:"stɜːn",stipulate:"ˈstɪpjʊleɪt",stitch:"stɪtʃ",
+straightforward:"ˌstreɪtˈfɔːwəd",strand:"strænd",stray:"streɪ",streamline:"ˈstriːmlaɪn",stride:"straɪd",
+striking:"ˈstraɪkɪŋ",strip:"strɪp",stroll:"strəʊl",stubborn:"ˈstʌbən",stun:"stʌn",
+subjective:"səbˈdʒektɪv",submarine:"ˌsʌbməˈriːn",submerge:"səbˈmɜːdʒ",subordinate:"səˈbɔːdɪnət",subscribe:"səbˈskraɪb",
+subsidiary:"səbˈsɪdiəri",subsidy:"ˈsʌbsɪdi",subtle:"ˈsʌtəl",successor:"səkˈsesə",sue:"suː",
+suffice:"səˈfaɪs",suite:"swiːt",summon:"ˈsʌmən",superb:"suːˈpɜːb",superficial:"ˌsuːpəˈfɪʃəl",
+supersonic:"ˌsuːpəˈsɒnɪk",superstition:"ˌsuːpəˈstɪʃən",supplementary:"ˌsʌplɪˈmentəri",surge:"sɜːdʒ",surpass:"səˈpɑːs",
+susceptible:"səˈseptɪbəl",suspension:"səˈspenʃən",swamp:"swɒmp",swap:"swɒp",symmetry:"ˈsɪmətri",
+symphony:"ˈsɪmfəni",symposium:"sɪmˈpəʊziəm",syndrome:"ˈsɪndrəʊm",synthesis:"ˈsɪnθəsɪs",tactics:"ˈtæktɪks",
+tangible:"ˈtændʒɪbəl",tariff:"ˈtærɪf",tease:"tiːz",temperament:"ˈtempərəmənt",tempo:"ˈtempəʊ",
+tempt:"tempt",tenant:"ˈtenənt",tentative:"ˈtentətɪv",terminate:"ˈtɜːmɪneɪt",terrace:"ˈterəs",
+terrain:"təˈreɪn",terrific:"təˈrɪfɪk",testify:"ˈtestɪfaɪ",testimony:"ˈtestɪməni",texture:"ˈtekstʃə",
+Thanksgiving:"ˌθæŋksˈɡɪvɪŋ",theft:"θeft",thereafter:"ðeərˈɑːftə",thermal:"ˈθɜːməl",thesis:"ˈθiːsɪs",
+threshold:"ˈθreʃhəʊld",thrill:"θrɪl",throne:"θrəʊn",tick:"tɪk",tile:"taɪl",
+tilt:"tɪlt",timely:"ˈtaɪmli",timid:"ˈtɪmɪd",token:"ˈtəʊkən",toll:"təʊl",
+toss:"tɒs",toxic:"ˈtɒksɪk",trait:"treɪt",transaction:"trænˈzækʃən",transcend:"trænˈsend",
+transient:"ˈtrænziənt",traverse:"trəˈvɜːs",trench:"trentʃ",tribe:"traɪb",tribute:"ˈtrɪbjuːt",
+trifle:"ˈtraɪfəl",triple:"ˈtrɪpəl",trivial:"ˈtrɪviəl",tuck:"tʌk",tug:"tʌɡ",
+tuition:"tjuːˈɪʃən",tumble:"ˈtʌmbəl",turbulent:"ˈtɜːbjʊlənt",turnover:"ˈtɜːnəʊvə",ultraviolet:"ˌʌltrəˈvaɪələt",
+unanimous:"juːˈnænɪməs",underestimate:"ˌʌndərˈestɪmeɪt",underlying:"ˌʌndəˈlaɪɪŋ",unfold:"ʌnˈfəʊld",unify:"ˈjuːnɪfaɪ",
+update:"ʌpˈdeɪt",upgrade:"ʌpˈɡreɪd",uphold:"ʌpˈhəʊld",uproar:"ˈʌprɔː",utility:"juːˈtɪləti",
+vacuum:"ˈvækjuəm",vague:"veɪɡ",vein:"veɪn",vent:"vent",ventilate:"ˈventɪleɪt",
+verbal:"ˈvɜːbəl",verdict:"ˈvɜːdɪkt",verge:"vɜːdʒ",versatile:"ˈvɜːsətaɪl",veto:"ˈviːtəʊ",
+vicinity:"vɪˈsɪnəti",vicious:"ˈvɪʃəs",violate:"ˈvaɪəleɪt",virgin:"ˈvɜːdʒɪn",vocational:"vəʊˈkeɪʃənəl",
+void:"vɔɪd",vulgar:"ˈvʌlɡə",ward:"wɔːd",warehouse:"ˈweəhaʊs",warfare:"ˈwɔːfeə",
+warrant:"ˈwɒrənt",watertight:"ˈwɔːtətaɪt",weary:"ˈwɪəri",weave:"wiːv",wedge:"wedʒ",
+whirl:"wɜːl",wholesome:"ˈhəʊlsəm",wink:"wɪŋk",wretched:"ˈretʃɪd"
+};
+
+// 合并内置词典到缓存
+Object.entries(BUILTIN_PHON).forEach(([k,v]) => { if (!phonCache[k]) phonCache[k] = v; });
+savePhonCache();
 
 async function fetchPhonetic(w) {
   if (phonCache[w.en]) return;
@@ -1280,7 +1475,8 @@ async function fetchPhonetic(w) {
     const ph = data[0]?.phonetic || data[0]?.phonetics?.find(p => p.text)?.text || '';
     if (ph) {
       phonCache[w.en] = ph.replace(/[\/\[\]]/g, '');
-      w.phonetic = w.phonetic || phonCache[w.en];
+      w.phonetic = phonCache[w.en];
+      savePhonCache();
       const el = document.getElementById('fcPhonetic');
       const elBack = document.getElementById('fcPhoneticBack');
       if (el && document.getElementById('fcWord').textContent === w.en) {
@@ -1289,6 +1485,24 @@ async function fetchPhonetic(w) {
       }
     }
   } catch(e) {}
+}
+function showCard() {
+  if (!filteredWords.length) { document.getElementById('fcWord').textContent='暂无单词'; document.getElementById('fcPos').textContent=''; return; }
+  if (cardIndex >= filteredWords.length) cardIndex = 0;
+  const w = filteredWords[cardIndex];
+  document.getElementById('fcWord').textContent = w.en;
+  const phEl = document.getElementById('fcPhonetic');
+  const phBack = document.getElementById('fcPhoneticBack');
+  const phText = w.phonetic || phonCache[w.en] || '';
+  if (phText) { phEl.textContent = '/'+phText+'/'; phBack.textContent = '/'+phText+'/'; }
+  else { phEl.textContent = ''; phBack.textContent = ''; fetchPhonetic(w); }
+  const s = getSRS(w.id);
+  const stageLabels = ['🆕 新学', '📅 1天后复习', '📅 3天后', '📅 7天后', '📅 14天后', '📅 30天后', '✅ 掌握'];
+  const stageText = isKnown(w.id) ? (s.stage >= 6 ? stageLabels[6] : stageLabels[s.stage] || stageLabels[0]) : '';
+  document.getElementById('fcPos').textContent = w.pos + (stageText ? ' · ' + stageText : '');
+  document.getElementById('fcMeaning').textContent = w.zh;
+  document.getElementById('fcExample').textContent = w.ex;
+  document.getElementById('card').classList.remove('flipped');
 }
 function flipCard() { document.getElementById('card').classList.toggle('flipped'); }
 function nextCard() { cardIndex = (cardIndex + 1) % filteredWords.length; showCard(); }
